@@ -10,49 +10,59 @@ struct SettingsView: View {
         Form {
             // 端口设置
             Section("端口设置") {
-                HStack {
-                    Text("HTTP 端口")
-                    Spacer()
-                    TextField("", text: .constant("\(viewModel.config?.port ?? 0)"))
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 100)
+                PortSettingRow(
+                    title: "HTTP 端口",
+                    value: $viewModel.tempHttpPort,
+                    savedValue: viewModel.httpPort,
+                    configKey: "port"
+                ) { newValue in
+                    if viewModel.validateAndUpdatePort(newValue, configKey: "port", server: server) {
+                        viewModel.httpPort = newValue
+                    }
                 }
                 
-                HStack {
-                    Text("Socks5 端口")
-                    Spacer()
-                    TextField("", text: .constant("\(viewModel.config?.socksPort ?? 0)"))
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 100)
+                PortSettingRow(
+                    title: "Socks5 端口",
+                    value: $viewModel.tempSocksPort,
+                    savedValue: viewModel.socksPort,
+                    configKey: "socks-port"
+                ) { newValue in
+                    if viewModel.validateAndUpdatePort(newValue, configKey: "socks-port", server: server) {
+                        viewModel.socksPort = newValue
+                    }
                 }
                 
-                HStack {
-                    Text("混合端口")
-                    Spacer()
-                    TextField("", text: .constant("\(viewModel.config?.mixedPort ?? 0)"))
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 100)
+                PortSettingRow(
+                    title: "混合端口",
+                    value: $viewModel.tempMixedPort,
+                    savedValue: viewModel.mixedPort,
+                    configKey: "mixed-port"
+                ) { newValue in
+                    if viewModel.validateAndUpdatePort(newValue, configKey: "mixed-port", server: server) {
+                        viewModel.mixedPort = newValue
+                    }
                 }
                 
-                HStack {
-                    Text("重定向端口")
-                    Spacer()
-                    TextField("", text: .constant("\(viewModel.config?.redirPort ?? 0)"))
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 100)
+                PortSettingRow(
+                    title: "重定向端口",
+                    value: $viewModel.tempRedirPort,
+                    savedValue: viewModel.redirPort,
+                    configKey: "redir-port"
+                ) { newValue in
+                    if viewModel.validateAndUpdatePort(newValue, configKey: "redir-port", server: server) {
+                        viewModel.redirPort = newValue
+                    }
                 }
                 
-                HStack {
-                    Text("TProxy 端口")
-                    Spacer()
-                    TextField("", text: .constant("\(viewModel.config?.tproxyPort ?? 0)"))
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 100)
+                PortSettingRow(
+                    title: "TProxy 端口",
+                    value: $viewModel.tempTproxyPort,
+                    savedValue: viewModel.tproxyPort,
+                    configKey: "tproxy-port"
+                ) { newValue in
+                    if viewModel.validateAndUpdatePort(newValue, configKey: "tproxy-port", server: server) {
+                        viewModel.tproxyPort = newValue
+                    }
                 }
             }
             
@@ -180,6 +190,14 @@ struct SettingsView: View {
                 }
             }
         }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("完成") {
+                    hideKeyboard()
+                }
+            }
+        }
         .alert("重启核心", isPresented: $showingRestartAlert) {
             Button("取消", role: .cancel) { }
             Button("确认重启", role: .destructive) {
@@ -202,4 +220,52 @@ struct SettingsView: View {
             viewModel.fetchConfig(server: server)
         }
     }
+}
+
+// 新增一个端口设置行的组件
+struct PortSettingRow: View {
+    let title: String
+    @Binding var value: String
+    let savedValue: String
+    let configKey: String
+    let onSubmit: (String) -> Void
+    
+    @FocusState private var isFocused: Bool
+    
+    var body: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            TextField("", text: $value)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 100)
+                .focused($isFocused)
+                .onChange(of: isFocused) { focused in
+                    if !focused {
+                        if value != savedValue {
+                            submitValue()
+                        }
+                    }
+                }
+        }
+    }
+    
+    private func submitValue() {
+        // 验证端口范围
+        if let port = Int(value), (0...65535).contains(port) {
+            onSubmit(value)
+        } else {
+            // 如果输入无效，恢复为保存的值
+            value = savedValue
+        }
+    }
 } 
+
+#if canImport(UIKit)
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+#endif

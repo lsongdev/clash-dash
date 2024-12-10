@@ -13,6 +13,16 @@ class SettingsViewModel: ObservableObject {
     @Published var language: String = "zh-CN"
     @Published var tunAutoRoute: Bool = true
     @Published var tunAutoDetectInterface: Bool = true
+    @Published var httpPort: String = "0"
+    @Published var socksPort: String = "0"
+    @Published var mixedPort: String = "0"
+    @Published var redirPort: String = "0"
+    @Published var tproxyPort: String = "0"
+    @Published var tempHttpPort: String = "0"
+    @Published var tempSocksPort: String = "0"
+    @Published var tempMixedPort: String = "0"
+    @Published var tempRedirPort: String = "0"
+    @Published var tempTproxyPort: String = "0"
     
     private func makeRequest(path: String, server: ClashServer) -> URLRequest? {
         let scheme = server.useSSL ? "https" : "http"
@@ -59,6 +69,17 @@ class SettingsViewModel: ObservableObject {
         if let interfaceName = config.interfaceName {
             self.interfaceName = interfaceName
         }
+        
+        self.httpPort = "\(config.port ?? 0)"
+        self.tempHttpPort = self.httpPort
+        self.socksPort = "\(config.socksPort ?? 0)"
+        self.tempSocksPort = self.socksPort
+        self.mixedPort = "\(config.mixedPort ?? 0)"
+        self.tempMixedPort = self.mixedPort
+        self.redirPort = "\(config.redirPort ?? 0)"
+        self.tempRedirPort = self.redirPort
+        self.tproxyPort = "\(config.tproxyPort ?? 0)"
+        self.tempTproxyPort = self.tproxyPort
     }
     
     func updateConfig(_ path: String, value: Any, server: ClashServer) {
@@ -113,7 +134,7 @@ class SettingsViewModel: ObservableObject {
                (200...299).contains(httpResponse.statusCode) {
                 print("GEO 数据库更新成功")
             } else if let error = error {
-                print("GEO 数据库更新失败：\(error.localizedDescription)")
+                print("GEO 数据库��新失败：\(error.localizedDescription)")
             }
         }.resume()
     }
@@ -173,5 +194,15 @@ class SettingsViewModel: ObservableObject {
                 print("核心更新失败：\(error.localizedDescription)")
             }
         }.resume()
+    }
+    
+    func validateAndUpdatePort(_ portString: String, configKey: String, server: ClashServer) -> Bool {
+        guard let port = Int(portString),
+              (0...65535).contains(port) else {
+            return false
+        }
+        
+        updateConfig(configKey, value: port, server: server)
+        return true
     }
 } 
