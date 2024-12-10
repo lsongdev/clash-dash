@@ -92,7 +92,10 @@ class ProxyViewModel: ObservableObject {
     }
     
     private var testTimeout: Int {
-        UserDefaults.standard.integer(forKey: "speedTestTimeout") 
+        // 添加默认值 5000，与 GlobalSettingsView 中的默认值保持一致
+        UserDefaults.standard.integer(forKey: "speedTestTimeout") == 0 
+            ? 5000 
+            : UserDefaults.standard.integer(forKey: "speedTestTimeout")
     }
     
     // 添加用于存储自定义顺序的键
