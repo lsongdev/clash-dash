@@ -80,7 +80,6 @@ class ProxyViewModel: ObservableObject {
     @Published var testingNodes: Set<String> = []
     @Published var lastUpdated = Date()
     @Published var lastDelayTestTime = Date()
-    @Published var isSortMode = false  // 添加排序模式状态
     
     private let server: ClashServer
     private var currentTask: Task<Void, Never>?
@@ -96,11 +95,6 @@ class ProxyViewModel: ObservableObject {
         UserDefaults.standard.integer(forKey: "speedTestTimeout") == 0 
             ? 5000 
             : UserDefaults.standard.integer(forKey: "speedTestTimeout")
-    }
-    
-    // 添加用于存储自定义顺序的键
-    private var customOrderKey: String {
-        "proxyGroups.customOrder.\(server.id)"
     }
     
     init(server: ClashServer) {
@@ -206,7 +200,7 @@ class ProxyViewModel: ObservableObject {
                             )
                         }
                         
-                        // 6. 合并所有节���数据
+                        // 6. 合并所有节点数据
                         var allNodes: [ProxyNode] = []
                         
                         // 添加特殊节点
@@ -598,7 +592,7 @@ class ProxyViewModel: ObservableObject {
         guard let finalUrl = components?.url else { return }
         request.url = finalUrl
         
-        // 设置测试状态
+        // 设置测试状��
         await MainActor.run {
             testingNodes.insert(proxyName)
             objectWillChange.send()
@@ -653,27 +647,8 @@ class ProxyViewModel: ObservableObject {
         }
     }
     
-    // 添加保存自定义顺序的方法
-    func saveCustomOrder() {
-        let orderDict = Dictionary(uniqueKeysWithValues: groups.enumerated().map { ($0.element.name, $0.offset) })
-        UserDefaults.standard.set(orderDict, forKey: customOrderKey)
-    }
-    
-    // 添加获取排序后的组的方法
+    // 修改 getSortedGroups 方法，只保留 GLOBAL 组排序逻辑
     func getSortedGroups() -> [ProxyGroup] {
-        if isSortMode {
-            // 在排序模式下使用保存的自定义顺序
-            if let savedOrder = UserDefaults.standard.dictionary(forKey: customOrderKey) as? [String: Int] {
-                let allGroupsPresent = groups.allSatisfy { savedOrder[$0.name] != nil }
-                
-                if allGroupsPresent {
-                    return groups.sorted { 
-                        savedOrder[$0.name] ?? 0 < savedOrder[$1.name] ?? 0 
-                    }
-                }
-            }
-        }
-        
         // 获取 GLOBAL 组的排序索引
         if let globalGroup = groups.first(where: { $0.name == "GLOBAL" }) {
             var sortIndex = globalGroup.all
@@ -686,7 +661,7 @@ class ProxyViewModel: ObservableObject {
             }
         }
         
-        // 如果找不到 GLOBAL 组或其他情况，使用字母顺序
+        // 如果找不到 GLOBAL 组，使用字母顺序
         return groups.sorted { $0.name < $1.name }
     }
 }
