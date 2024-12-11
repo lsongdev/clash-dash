@@ -20,7 +20,7 @@ jobs:
       - name: Build IPA
         run: |
           mkdir -p build
-          xcodebuild -scheme "OpenClash Dashboard" \
+          xcodebuild -scheme "Clash Dash" \
             -configuration Release \
             -archivePath build/App.xcarchive \
             -sdk iphoneos \
