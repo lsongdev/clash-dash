@@ -1,12 +1,15 @@
+import Foundation
+
 struct ClashConfig: Codable {
     let port: Int
     let socksPort: Int
     let redirPort: Int
-    let mixedPort: Int
-    let tproxyPort: Int
+    let mixedPort: Int?
+    let tproxyPort: Int?
+    let allowLan: Bool
     let mode: String
     let logLevel: String
-    let allowLan: Bool
+    let secret: String?
     let sniffing: Bool?
     let interfaceName: String?
     let tun: TunConfig?
@@ -18,8 +21,6 @@ struct ClashConfig: Codable {
         let stack: String
         let autoRoute: Bool
         let autoDetectInterface: Bool
-        let dnsHijack: [String]
-        let inet4Address: [String]
         
         enum CodingKeys: String, CodingKey {
             case enable
@@ -27,8 +28,6 @@ struct ClashConfig: Codable {
             case stack
             case autoRoute = "auto-route"
             case autoDetectInterface = "auto-detect-interface"
-            case dnsHijack = "dns-hijack"
-            case inet4Address = "inet4-address"
         }
     }
     
@@ -42,9 +41,10 @@ struct ClashConfig: Codable {
         case redirPort = "redir-port"
         case mixedPort = "mixed-port"
         case tproxyPort = "tproxy-port"
+        case allowLan = "allow-lan"
         case mode
         case logLevel = "log-level"
-        case allowLan = "allow-lan"
+        case secret
         case sniffing
         case interfaceName = "interface-name"
         case tun

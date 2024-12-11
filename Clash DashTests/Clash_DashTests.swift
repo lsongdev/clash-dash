@@ -1,14 +1,14 @@
 //
-//  OpenClash_DashboardTests.swift
-//  OpenClash DashboardTests
+//  Clash_DashTests.swift
+//  Clash DashTests
 //
-//  Created by Mou Yan on 11/19/24.
+//  Created by Mou Yan on 12/10/24.
 //
 
 import Testing
-@testable import OpenClash_Dashboard
+@testable import Clash_Dash
 
-struct OpenClash_DashboardTests {
+struct Clash_DashTests {
 
     @Test func example() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.

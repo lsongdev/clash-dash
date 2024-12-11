@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var editingServer: ClashServer?
     @State private var selectedQuickLaunchServer: ClashServer?
     @State private var showQuickLaunchDestination = false
+    @State private var showingAddOpenWRTSheet = false
     
     var body: some View {
         NavigationStack {
@@ -30,8 +31,18 @@ struct ContentView: View {
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 32)
                         
-                        Button {
-                            showingAddSheet = true
+                        Menu {
+                            Button(action: {
+                                showingAddSheet = true
+                            }) {
+                                Label("Clash 控制器", systemImage: "server.rack")
+                            }
+                            
+                            Button(action: {
+                                showingAddOpenWRTSheet = true
+                            }) {
+                                Label("OpenWRT 服务器", systemImage: "wifi.router")
+                            }
                         } label: {
                             Text("添加服务器")
                                 .font(.headline)
@@ -103,7 +114,7 @@ struct ContentView: View {
                         .cornerRadius(16)
                         
                         // 版本信息
-                        Text("Ver: 1.1.1 Build 3")
+                        Text("Ver: 1.1.1")
                             .foregroundColor(.secondary)
                             .font(.footnote)
                             .padding(.top, 8)
@@ -119,9 +130,19 @@ struct ContentView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showingAddSheet = true
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button(action: {
+                            showingAddSheet = true
+                        }) {
+                            Label("Clash 控制器", systemImage: "server.rack")
+                        }
+                        
+                        Button(action: {
+                            showingAddOpenWRTSheet = true
+                        }) {
+                            Label("OpenWRT 服务器", systemImage: "wifi.router")
+                        }
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
@@ -133,7 +154,14 @@ struct ContentView: View {
                 AddServerView(viewModel: viewModel)
             }
             .sheet(item: $editingServer) { server in
-                EditServerView(viewModel: viewModel, server: server)
+                if server.source == .clashController {
+                    EditServerView(viewModel: viewModel, server: server)
+                } else {
+                    OpenWRTServerView(viewModel: viewModel, server: server)
+                }
+            }
+            .sheet(isPresented: $showingAddOpenWRTSheet) {
+                OpenWRTServerView(viewModel: viewModel)
             }
             .refreshable {
                 await viewModel.checkAllServersStatus()
@@ -162,20 +190,15 @@ struct ServerRowView: View {
     
     private var versionDisplay: String {
         guard let version = server.version else { return "" }
-        // 如果版本号太长，截取前15个字符
         return version.count > 15 ? String(version.prefix(15)) + "..." : version
     }
     
     private var statusIcon: String {
         switch server.status {
-        case .ok:
-            return "checkmark.circle.fill"
-        case .error:
-            return "exclamationmark.circle.fill"
-        case .unauthorized:
-            return "lock.circle.fill"
-        case .unknown:
-            return "questionmark.circle.fill"
+        case .ok: return "checkmark.circle.fill"
+        case .error: return "exclamationmark.circle.fill"
+        case .unauthorized: return "lock.circle.fill"
+        case .unknown: return "questionmark.circle.fill"
         }
     }
     
@@ -207,32 +230,32 @@ struct ServerRowView: View {
                 
                 if server.status == .ok {
                     HStack(spacing: 4) {
-                        // 服务器类型标签
-                        if let serverType = server.serverType {
-                            Label {
-                                Text(serverType.rawValue)
-                                    .foregroundColor(.secondary)
-                            } icon: {
-                                Image(systemName: "cpu")
-                                    .foregroundColor(.secondary)
-                            }
-                            .font(.caption)
-                            
-                            Text("•")
-                                .foregroundColor(.secondary)
-                                .font(.caption)
-                        }
-                        
-                        // 版本信息
+                        // 服务器来源标签
                         Label {
-                            Text(versionDisplay)
+                            Text(server.source == .clashController ? "Clash 控制器" : "OpenWRT")
                                 .foregroundColor(.secondary)
                         } icon: {
-                            Image(systemName: "tag")
+                            Image(systemName: server.source == .clashController ? "server.rack" : "wifi.router")
                                 .foregroundColor(.secondary)
                         }
                         .font(.caption)
-                        .lineLimit(1)
+                        
+                        if server.source == .clashController {
+                            Text("•")
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                            
+                            // 版本信息
+                            Label {
+                                Text(versionDisplay)
+                                    .foregroundColor(.secondary)
+                            } icon: {
+                                Image(systemName: "tag")
+                                    .foregroundColor(.secondary)
+                            }
+                            .font(.caption)
+                            .lineLimit(1)
+                        }
                     }
                 } else if let errorMessage = server.errorMessage {
                     Text(errorMessage)
@@ -249,7 +272,7 @@ struct ServerRowView: View {
                 .foregroundColor(.secondary)
         }
         .padding()
-        .frame(height: 80)  // 固定卡片高度
+        .frame(height: 80)
         .background(Color(.secondarySystemGroupedBackground))
         .cornerRadius(16)
     }
@@ -285,3 +308,4 @@ struct SettingsLinkRow<Destination: View>: View {
 #Preview {
     ContentView()
 }
+

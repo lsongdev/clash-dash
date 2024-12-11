@@ -1,6 +1,6 @@
 //
-//  OpenClash_DashboardApp.swift
-//  OpenClash Dashboard
+//  Clash_Dash.swift
+//  Clash Dash
 //
 //  Created by Mou Yan on 11/19/24.
 //
@@ -9,7 +9,7 @@ import SwiftUI
 import Network
 
 @main
-struct OpenClash_DashboardApp: App {
+struct Clash_Dash: App {
     @StateObject private var networkMonitor = NetworkMonitor()
     
     init() {

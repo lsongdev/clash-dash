@@ -1,13 +1,13 @@
 //
-//  OpenClash_DashboardUITests.swift
-//  OpenClash DashboardUITests
+//  Clash_DashUITests.swift
+//  Clash DashUITests
 //
-//  Created by Mou Yan on 11/19/24.
+//  Created by Mou Yan on 12/10/24.
 //
 
 import XCTest
 
-final class OpenClash_DashboardUITests: XCTestCase {
+final class Clash_DashUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

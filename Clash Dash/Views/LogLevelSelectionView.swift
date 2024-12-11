@@ -1,6 +1,6 @@
 //
 //  LogLevelSelectionView.swift
-//  OpenClash Dashboard
+//  Clash Dash
 //
 //  Created by Mou Yan on 11/28/24.
 //

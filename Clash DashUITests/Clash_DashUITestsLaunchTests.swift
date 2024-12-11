@@ -1,13 +1,13 @@
 //
-//  OpenClash_DashboardUITestsLaunchTests.swift
-//  OpenClash DashboardUITests
+//  Clash_DashUITestsLaunchTests.swift
+//  Clash DashUITests
 //
-//  Created by Mou Yan on 11/19/24.
+//  Created by Mou Yan on 12/10/24.
 //
 
 import XCTest
 
-final class OpenClash_DashboardUITestsLaunchTests: XCTestCase {
+final class Clash_DashUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
