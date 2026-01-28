@@ -110,7 +110,7 @@ class ProxyViewModel: ObservableObject {
     
     private func makeRequest(path: String) -> URLRequest? {
         let scheme = server.useSSL ? "https" : "http"
-        guard let url = URL(string: "\(scheme)://\(server.url):\(server.port)/\(path)") else {
+        guard let url = URL(string: "\(scheme)://\(server.host):\(server.port)/\(path)") else {
             print("无效的 URL")
             return nil
         }

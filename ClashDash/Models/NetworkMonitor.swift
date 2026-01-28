@@ -87,7 +87,7 @@ class NetworkMonitor: ObservableObject {
     
     private func getWebSocketURL(for path: String, server: ClashServer) -> URL? {
         let scheme = server.useSSL ? "wss" : "ws"
-        let urlString = "\(scheme)://\(server.url):\(server.port)/\(path)"
+        let urlString = "\(scheme)://\(server.host):\(server.port)/\(path)"
         return URL(string: urlString)
     }
     

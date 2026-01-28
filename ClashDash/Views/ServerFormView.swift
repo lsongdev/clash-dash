@@ -5,7 +5,7 @@ struct AddServerView: View {
     @ObservedObject var viewModel: ServerViewModel
     
     @State private var name = ""
-    @State private var url = ""
+    @State private var host = ""
     @State private var port = ""
     @State private var secret = ""
     @State private var useSSL = false
@@ -14,7 +14,7 @@ struct AddServerView: View {
         // 检查 URL 是否是 IP 地址
         let ipPattern = "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
         let ipPredicate = NSPredicate(format: "SELF MATCHES %@", ipPattern)
-        return !ipPredicate.evaluate(with: url) && !url.isEmpty
+        return !ipPredicate.evaluate(with: host) && !host.isEmpty
     }
     
     var body: some View {
@@ -22,15 +22,15 @@ struct AddServerView: View {
             Form {
                 Section {
                     TextField("名称（可选）", text: $name)
-                    TextField("服务器地址", text: $url)
+                    TextField("Host", text: $host)
                         .textInputAutocapitalization(.never)
                         .keyboardType(.URL)
-                        .onChange(of: url) { _ in
+                        .onChange(of: host) { _ in
                             if isHostname {
                                 useSSL = true
                             }
                         }
-                    TextField("端口", text: $port)
+                    TextField("Port", text: $port)
                         .keyboardType(.numberPad)
                     TextField("密钥", text: $secret)
                         .textInputAutocapitalization(.never)
@@ -57,20 +57,20 @@ struct AddServerView: View {
                     }
                 }
             }
-            .navigationTitle("添加服务器")
+            .navigationTitle("Add Server")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("添加") {
+                    Button("Save") {
                         let server = ClashServer(
                             name: name,
-                            url: url,
+                            host: host,
                             port: port,
                             secret: secret,
                             useSSL: useSSL
@@ -78,7 +78,7 @@ struct AddServerView: View {
                         viewModel.addServer(server)
                         dismiss()
                     }
-                    .disabled(url.isEmpty || port.isEmpty || secret.isEmpty)
+                    .disabled(host.isEmpty || port.isEmpty || secret.isEmpty)
                 }
             }
         }
@@ -108,7 +108,7 @@ struct EditServerView: View {
         self.viewModel = viewModel
         self.server = server
         self._name = State(initialValue: server.name)
-        self._url = State(initialValue: server.url)
+        self._url = State(initialValue: server.host)
         self._port = State(initialValue: server.port)
         self._secret = State(initialValue: server.secret)
         self._useSSL = State(initialValue: server.useSSL)
@@ -168,7 +168,7 @@ struct EditServerView: View {
                         let updatedServer = ClashServer(
                             id: server.id,
                             name: name,
-                            url: url,
+                            host: url,
                             port: port,
                             secret: secret,
                             status: server.status,

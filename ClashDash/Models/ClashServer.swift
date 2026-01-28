@@ -1,14 +1,9 @@
 import SwiftUI
 
-enum ServerSource: String, Codable {
-    case clashController = "clash_controller"
-    case openWRT = "openwrt"
-}
-
 struct ClashServer: Identifiable, Codable {
     let id: UUID
     var name: String
-    var url: String
+    var host: String
     var port: String
     var secret: String
     var status: ServerStatus
@@ -17,11 +12,6 @@ struct ClashServer: Identifiable, Codable {
     var errorMessage: String?
     var serverType: ServerType?
     var isQuickLaunch: Bool = false
-    var source: ServerSource
-    var openWRTUsername: String?
-    var openWRTPassword: String?
-    var openWRTPort: String?
-    var openWRTUrl: String?
     
     enum ServerType: String, Codable {
         case unknown = "Unknown"
@@ -32,39 +22,30 @@ struct ClashServer: Identifiable, Codable {
     
     init(id: UUID = UUID(), 
          name: String = "", 
-         url: String = "", 
-         port: String = "", 
+         host: String = "",
+         port: String = "",
          secret: String = "", 
          status: ServerStatus = .unknown, 
          version: String? = nil,
          useSSL: Bool = false,
-         source: ServerSource = .clashController,
          isQuickLaunch: Bool = false) {
         self.id = id
         self.name = name
-        self.url = url
+        self.host = host
         self.port = port
         self.secret = secret
         self.status = status
         self.version = version
         self.useSSL = useSSL
-        self.source = source
         self.isQuickLaunch = isQuickLaunch
     }
     
     var displayName: String {
-        if name.isEmpty {
-            if source == .clashController {
-                return "\(url):\(port)"
-            } else {
-                return "\(openWRTUrl ?? url):\(openWRTPort ?? "")"
-            }
-        }
-        return name
+        return "\(host):\(port)"
     }
     
     var baseURL: URL? {
-        let cleanURL = url.replacingOccurrences(of: "^https?://", with: "", options: .regularExpression)
+        let cleanURL = host.replacingOccurrences(of: "^https?://", with: "", options: .regularExpression)
         let scheme = useSSL ? "https" : "http"
         return URL(string: "\(scheme)://\(cleanURL):\(port)")
     }

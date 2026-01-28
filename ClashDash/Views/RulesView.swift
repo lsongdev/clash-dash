@@ -226,12 +226,4 @@ struct RulesListRepresentable: UIViewRepresentable {
         }
     }
 }
-
-#Preview {
-    NavigationStack {
-        RulesView(server: ClashServer(name: "测试服务器",
-                                    url: "10.1.1.2",
-                                    port: "9090",
-                                    secret: "123456"))
-    }
-}
+ 

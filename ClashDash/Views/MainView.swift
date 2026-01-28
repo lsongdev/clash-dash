@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ContentView: View {
+struct MainView: View {
     @StateObject private var viewModel = ServerViewModel()
     @State private var showingSetting = false
     @State private var showingAddSheet = false
@@ -26,7 +26,7 @@ struct ContentView: View {
                             .font(.title2)
                             .fontWeight(.medium)
                         
-                        Text("点击添加按钮来添加一个新的服务器")
+                        Text("Tap [+] to add server")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -35,7 +35,7 @@ struct ContentView: View {
                         Button(action: {
                             showingAddSheet = true
                         }) {
-                            Text("添加服务器")
+                            Text("Add Server")
                                 .font(.headline)
                                 .foregroundColor(.white)
                                 .frame(width: 160, height: 44)
@@ -56,7 +56,7 @@ struct ContentView: View {
                                         Button(role: .destructive) {
                                             viewModel.deleteServer(server)
                                         } label: {
-                                            Label("删除", systemImage: "trash")
+                                            Label("Delete", systemImage: "trash")
                                         }
                                         
                                         Button {
@@ -99,12 +99,12 @@ struct ContentView: View {
                     }
                 }
                 
-//                ToolbarItem(placement: .primaryAction) {
-//                    Button(action: { showingSetting = true }) {
-//                        Image(systemName: "gear")
-//                    }
-//                    
-//                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: { showingSetting = true }) {
+                        Image(systemName: "gear")
+                    }
+                    
+                }
                 
             }
             .sheet(isPresented: $showingAddSheet) {
@@ -193,22 +193,20 @@ struct ServerRowView: View {
                         }
                         .font(.caption)
                         
-                        if server.source == .clashController {
-                            Text("•")
-                                .foregroundColor(.secondary)
-                                .font(.caption)
-                            
-                            // 版本信息
-                            Label {
-                                Text(versionDisplay)
-                                    .foregroundColor(.secondary)
-                            } icon: {
-                                Image(systemName: "tag")
-                                    .foregroundColor(.secondary)
-                            }
+                        Text("•")
+                            .foregroundColor(.secondary)
                             .font(.caption)
-                            .lineLimit(1)
+                        
+                        // 版本信息
+                        Label {
+                            Text(versionDisplay)
+                                .foregroundColor(.secondary)
+                        } icon: {
+                            Image(systemName: "tag")
+                                .foregroundColor(.secondary)
                         }
+                        .font(.caption)
+                        .lineLimit(1)
                     }
                 } else if let errorMessage = server.errorMessage {
                     Text(errorMessage)
@@ -257,8 +255,3 @@ struct SettingsLinkRow<Destination: View>: View {
         }
     }
 }
-
-#Preview {
-    ContentView()
-}
-

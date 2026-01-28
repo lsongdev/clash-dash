@@ -57,7 +57,7 @@ class ServerViewModel: NSObject, ObservableObject, URLSessionDelegate, URLSessio
         var urlComponents = URLComponents()
         
         urlComponents.scheme = scheme
-        urlComponents.host = server.url
+        urlComponents.host = server.host
         urlComponents.port = Int(server.port)
         urlComponents.path = path
         

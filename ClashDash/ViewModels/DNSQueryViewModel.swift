@@ -19,7 +19,7 @@ class DNSQueryViewModel: ObservableObject {
         }
         
         let scheme = server.useSSL ? "https" : "http"
-        guard let url = URL(string: "\(scheme)://\(server.url):\(server.port)/dns/query?name=\(encodedDomain)&type=\(type)") else {
+        guard let url = URL(string: "\(scheme)://\(server.host):\(server.port)/dns/query?name=\(encodedDomain)&type=\(type)") else {
             return nil
         }
         

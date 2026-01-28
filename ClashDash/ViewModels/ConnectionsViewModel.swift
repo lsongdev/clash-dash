@@ -153,7 +153,7 @@ class ConnectionsViewModel: ObservableObject {
         
         // 构建 WebSocket URL，支持 SSL
         let scheme = server.useSSL ? "wss" : "ws"
-        guard let url = URL(string: "\(scheme)://\(server.url):\(server.port)/connections") else {
+        guard let url = URL(string: "\(scheme)://\(server.host):\(server.port)/connections") else {
             log("❌ URL 构建失败")
             DispatchQueue.main.async { [weak self] in
                 self?.connectionState = .error("URL 构建失败")
@@ -163,7 +163,7 @@ class ConnectionsViewModel: ObservableObject {
         
         // 先测试 HTTP 连接
         let httpScheme = server.useSSL ? "https" : "http"
-        var testRequest = URLRequest(url: URL(string: "\(httpScheme)://\(server.url):\(server.port)")!)
+        var testRequest = URLRequest(url: URL(string: "\(httpScheme)://\(server.host):\(server.port)")!)
         if !server.secret.isEmpty {
             testRequest.setValue("Bearer \(server.secret)", forHTTPHeaderField: "Authorization")
         }
@@ -445,7 +445,7 @@ class ConnectionsViewModel: ObservableObject {
     private func makeRequest(path: String, method: String = "GET") -> URLRequest? {
         let scheme = server?.useSSL == true ? "https" : "http"
         guard let server = server,
-              let url = URL(string: "\(scheme)://\(server.url):\(server.port)/\(path)") else {
+              let url = URL(string: "\(scheme)://\(server.host):\(server.port)/\(path)") else {
             return nil
         }
         

@@ -36,7 +36,7 @@ class LogViewModel: ObservableObject {
     private func makeWebSocketRequest(server: ClashServer) -> URLRequest? {
         var components = URLComponents()
         components.scheme = server.useSSL ? "wss" : "ws"
-        components.host = server.url
+        components.host = server.host
         components.port = Int(server.port)
         components.path = "/logs"
         components.queryItems = [

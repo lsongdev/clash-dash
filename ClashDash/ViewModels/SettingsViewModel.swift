@@ -26,7 +26,7 @@ class SettingsViewModel: ObservableObject {
     
     private func makeRequest(path: String, server: ClashServer) -> URLRequest? {
         let scheme = server.useSSL ? "https" : "http"
-        guard let url = URL(string: "\(scheme)://\(server.url):\(server.port)/\(path)") else {
+        guard let url = URL(string: "\(scheme)://\(server.host):\(server.port)/\(path)") else {
             print("无效的 URL")
             return nil
         }
@@ -138,7 +138,7 @@ class SettingsViewModel: ObservableObject {
     
     // MARK: - Actions
     func reloadConfig(server: ClashServer) {
-        guard let url = URL(string: "http://\(server.url):\(server.port)/configs?force=true") else { return }
+        guard let url = URL(string: "http://\(server.host):\(server.port)/configs?force=true") else { return }
         
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
@@ -157,7 +157,7 @@ class SettingsViewModel: ObservableObject {
     }
     
     func updateGeoDatabase(server: ClashServer) {
-        guard let url = URL(string: "http://\(server.url):\(server.port)/configs/geo") else { return }
+        guard let url = URL(string: "http://\(server.host):\(server.port)/configs/geo") else { return }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -176,7 +176,7 @@ class SettingsViewModel: ObservableObject {
     }
     
     func clearFakeIP(server: ClashServer) {
-        guard let url = URL(string: "http://\(server.url):\(server.port)/cache/fakeip/flush") else { return }
+        guard let url = URL(string: "http://\(server.host):\(server.port)/cache/fakeip/flush") else { return }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -195,7 +195,7 @@ class SettingsViewModel: ObservableObject {
     }
     
     func restartCore(server: ClashServer) {
-        guard let url = URL(string: "http://\(server.url):\(server.port)/restart") else { return }
+        guard let url = URL(string: "http://\(server.host):\(server.port)/restart") else { return }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -214,7 +214,7 @@ class SettingsViewModel: ObservableObject {
     }
     
     func upgradeCore(server: ClashServer) {
-        guard let url = URL(string: "http://\(server.url):\(server.port)/upgrade") else { return }
+        guard let url = URL(string: "http://\(server.host):\(server.port)/upgrade") else { return }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"

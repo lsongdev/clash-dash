@@ -50,7 +50,7 @@ struct ServerDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     HStack {
-                        Text(server.name.isEmpty ? "\(server.url):\(server.port)" : server.name)
+                        Text(server.name.isEmpty ? "\(server.host):\(server.port)" : server.name)
                             .font(.headline)
                         if server.isQuickLaunch {
                             Image(systemName: "bolt.circle.fill")
@@ -431,9 +431,4 @@ struct ProxyGroupRow: View {
         .padding(.vertical, 4)
     }
 }
-
-#Preview {
-    NavigationStack {
-        ServerDetailView(server: ClashServer(name: "测试服务器", url: "10.1.1.2", port: "9090", secret: "123456"))
-    }
-} 
+ 
