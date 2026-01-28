@@ -17,12 +17,13 @@ extension View {
 }
 
 struct ProxyView: View {
-    let server: ClashServer
     @StateObject private var viewModel: ProxyViewModel
     @State private var selectedGroupId: String?
     @State private var isRefreshing = false
     @State private var showProviderSheet = false
     @Namespace private var animation
+    
+    let server: ClashServer
     
     // 添加触觉反馈生成器
     private let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -33,67 +34,67 @@ struct ProxyView: View {
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // 代理组概览卡片
-                ProxyGroupsOverview(
-                    groups: viewModel.getSortedGroups(),
-                    viewModel: viewModel
-                )
-                
-                // 代理提供者部分
-                if !viewModel.providers.isEmpty {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // 代理组概览卡片
+                    ProxyGroupsOverview(
+                        groups: viewModel.getSortedGroups(),
+                        viewModel: viewModel
+                    )
+                    
+                    // 代理提供者部分
                     ProxyProvidersSection(
                         providers: viewModel.providers,
                         nodes: viewModel.providerNodes,
                         viewModel: viewModel
                     )
                 }
+                .padding()
             }
-            .padding()
-        }
-        .background(Color(.systemGroupedBackground))
-        .refreshable {
-            await refreshData()
-        }
-        .navigationTitle(server.displayName)
-        .navigationBarTitleDisplayMode(.large)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                HStack(spacing: 12) {
-                    Button {
-                        // 添加触觉反馈
-                        impactFeedback.impactOccurred()
-                        showProviderSheet = true
-                    } label: {
-                        Label("添加", systemImage: "square.stack.3d.up")
+            .refreshable {
+                await refreshData()
+            }
+            .task {
+                await viewModel.fetchProxies()
+            }
+            .navigationTitle("Proxies")
+            // .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack(spacing: 12) {
+                        Button {
+                            // 添加触觉反馈
+                            impactFeedback.impactOccurred()
+                            showProviderSheet = true
+                        } label: {
+                            Label("添加", systemImage: "square.stack.3d.up")
+                        }
+                        
+                        Button {
+                            // 添加触觉反馈
+                            impactFeedback.impactOccurred()
+                            Task { await refreshData() }
+                        } label: {
+                            Label("刷新", systemImage: "arrow.clockwise")
+                                .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                                .animation(isRefreshing ? .linear(duration: 1).repeatForever(autoreverses: false) : .default,
+                                         value: isRefreshing)
+                        }
+                        .disabled(isRefreshing)
                     }
-                    
-                    Button {
-                        // 添加触觉反馈
-                        impactFeedback.impactOccurred()
-                        Task { await refreshData() }
-                    } label: {
-                        Label("刷新", systemImage: "arrow.clockwise")
-                            .rotationEffect(.degrees(isRefreshing ? 360 : 0))
-                            .animation(isRefreshing ? .linear(duration: 1).repeatForever(autoreverses: false) : .default,
-                                     value: isRefreshing)
-                    }
-                    .disabled(isRefreshing)
                 }
             }
+            .sheet(isPresented: $showProviderSheet) {
+                ProvidersSheetView(
+                    providers: viewModel.providers,
+                    nodes: viewModel.providerNodes,
+                    viewModel: viewModel
+                )
+                .presentationDetents([.medium, .large])
+            }
         }
-        .sheet(isPresented: $showProviderSheet) {
-            ProvidersSheetView(
-                providers: viewModel.providers,
-                nodes: viewModel.providerNodes,
-                viewModel: viewModel
-            )
-            .presentationDetents([.medium, .large])
-        }
-        .task {
-            await viewModel.fetchProxies()
-        }
+        
     }
     
     private func refreshData() async {
@@ -108,7 +109,7 @@ struct ProxyView: View {
     
     private func sortNodes(_ nodeNames: [String], _ allNodes: [ProxyNode], groupName: String) -> [ProxyNode] {
         let specialNodes = ["DIRECT", "REJECT"]
-        var matchedNodes = nodeNames.compactMap { name in
+        let matchedNodes = nodeNames.compactMap { name in
             if specialNodes.contains(name) {
                 if let existingNode = allNodes.first(where: { $0.name == name }) {
                     return existingNode
@@ -154,7 +155,10 @@ struct ProxyGroupsOverview: View {
     @ObservedObject var viewModel: ProxyViewModel
     
     var body: some View {
-        LazyVStack(spacing: 16) {
+        VStack(alignment: .leading, spacing: 16) {
+//            Text("Proxies")
+//                .font(.title2.bold())
+            
             ForEach(groups, id: \.name) { group in
                 GroupCard(
                     group: group,
@@ -379,7 +383,7 @@ struct ProxyProvidersSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Proxy Providers")
+            Text("Providers")
                 .font(.title2.bold())
             
             ForEach(providers.sorted(by: { $0.name < $1.name })) { provider in

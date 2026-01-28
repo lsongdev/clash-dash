@@ -77,14 +77,14 @@ struct ConnectionRow: View {
             Image(systemName: icon)
                 .font(.system(size: 12))
                 .foregroundColor(color)
-                .frame(width: 16)
+                // .frame(width: 16)
             Text(formatBytes(bytes))
-                .frame(width: 58, alignment: .leading)
+                // .frame(width: 58, alignment: .leading)
                 .foregroundColor(color)
                 .font(.system(.footnote, design: .monospaced))
                 .monospacedDigit()
         }
-        .frame(width: 78)
+        // .frame(width: 78)
     }
     
     // 优化速度显示组件
@@ -95,24 +95,28 @@ struct ConnectionRow: View {
                 Image(systemName: "arrow.down")
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.blue)
-                    .frame(width: 12)
+                    .fixedSize(horizontal: true, vertical: false)
+                    // .frame(width: 12)
                 Text(formatSpeed(download))
-                    .frame(width: 66, alignment: .leading)
+                    // .frame(width: 66, alignment: .leading)
                     .monospacedDigit()
+                    .fixedSize(horizontal: true, vertical: false)
             }
-            .frame(width: 70)
+            // .frame(width: 70)
             
             // 上传速度
             HStack(spacing: 2) {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.green)
-                    .frame(width: 12)
+                    .fixedSize(horizontal: true, vertical: false)
+                    // .frame(width: 12)
                 Text(formatSpeed(upload))
-                    .frame(width: 66, alignment: .leading)
+                    // .frame(width: 66, alignment: .leading)
                     .monospacedDigit()
+                    .fixedSize(horizontal: true, vertical: false)
             }
-            .frame(width: 70)
+            // .frame(width: 70)
         }
         .font(.system(.footnote, design: .monospaced))
         .foregroundColor(.secondary)
@@ -136,9 +140,21 @@ struct ConnectionRow: View {
                         Text(connection.formattedStartTime)
                             .foregroundColor(.secondary)
                         
+                        Spacer()
+                        
                         // 根据连接状态显示不同的信息
                         if connection.isAlive {
                             SpeedView(download: connection.downloadSpeed, upload: connection.uploadSpeed)
+                            Button {
+                                // 添加触觉反馈
+                                impactFeedback.impactOccurred()
+                                onClose()
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.secondary.opacity(0.5))
+                                    .frame(width: 20, height: 20)
+                            }
+                            .buttonStyle(.plain)
                         } else {
                             Text(connection.formattedDuration)
                                 .foregroundColor(.secondary)
@@ -151,22 +167,6 @@ struct ConnectionRow: View {
                         }
                     }
                     .font(.footnote)
-                    
-                    Spacer()
-                    
-                    // 只在连接活跃时显示关闭按钮
-                    if connection.isAlive {
-                        Button {
-                            // 添加触觉反馈
-                            impactFeedback.impactOccurred()
-                            onClose()
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.secondary.opacity(0.5))
-                                .frame(width: 20, height: 20)
-                        }
-                        .buttonStyle(.plain)
-                    }
                 }
                 
                 // 第二行：主机信息
@@ -200,6 +200,7 @@ struct ConnectionRow: View {
                             .background(Color.green.opacity(0.1))
                             .foregroundColor(.green)
                             .cornerRadius(4)
+                            .fixedSize(horizontal: true, vertical: false)
                         
                         if let tagName = getClientTag(for: connection.metadata.sourceIP) {
                             Text(tagName)
@@ -213,6 +214,7 @@ struct ConnectionRow: View {
                             Text("\(connection.metadata.sourceIP):\(connection.metadata.sourcePort)")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
+                                .lineLimit(1)
                         }
                     }
                     
@@ -233,13 +235,13 @@ struct ConnectionRow: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(cardBackgroundColor)
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 6)
+            // .padding(.horizontal, 16)
+            // .padding(.vertical, 12)
+            // .background(cardBackgroundColor)
+            // .cornerRadius(16)
+            // .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+            // .padding(.horizontal, 16)
+            // .padding(.vertical, 6)
         }
         .buttonStyle(.plain)
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: connection.isAlive)

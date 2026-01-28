@@ -11,81 +11,41 @@ struct MainView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                if viewModel.servers.isEmpty {
-                    VStack(spacing: 20) {
-                        Spacer()
-                            .frame(height: 60)
-                        
-                        Image(systemName: "server.rack")
-                            .font(.system(size: 50))
-                            .foregroundColor(.secondary.opacity(0.7))
-                            .padding(.bottom, 10)
-                        
-                        Text("没有服务器")
-                            .font(.title2)
-                            .fontWeight(.medium)
-                        
-                        Text("Tap [+] to add server")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32)
-                        
-                        Button(action: {
-                            showingAddSheet = true
-                        }) {
-                            Text("Add Server")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(width: 160, height: 44)
-                                .background(Color.blue)
-                                .cornerRadius(22)
-                        }
-                        
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    VStack(spacing: 20) {
-                        // 服务器卡片列表
-                        ForEach(viewModel.servers) { server in
-                            NavigationLink(destination: ServerDetailView(server: server)) {
-                                ServerRowView(server: server)
-                                    .contextMenu {
-                                        Button(role: .destructive) {
-                                            viewModel.deleteServer(server)
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
-                                        }
-                                        
-                                        Button {
-                                            editingServer = server
-                                        } label: {
-                                            Label("编辑", systemImage: "pencil")
-                                        }
-                                        
-                                        Button {
-                                            viewModel.setQuickLaunch(server)
-                                        } label: {
-                                            Label(server.isQuickLaunch ? "取消快速启动" : "设为快速启动", 
-                                                  systemImage: server.isQuickLaunch ? "bolt.slash.circle" : "bolt.circle")
-                                        }
-                                    }
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                        .background(Color(.secondarySystemGroupedBackground))
-                        .cornerRadius(16)
-                    }
-                    .padding()
-                }
+            
+            if viewModel.servers.isEmpty {
+                emptyView()
             }
-            .background(Color(.systemGroupedBackground))
+            // 服务器卡片列表
+            List(viewModel.servers) { server in
+                NavigationLink(destination: ServerView(server: server)) {
+                    ServerRowView(server: server)
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                viewModel.deleteServer(server)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            
+                            Button {
+                                editingServer = server
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            
+                            Button {
+                                viewModel.setQuickLaunch(server)
+                            } label: {
+                                Label(server.isQuickLaunch ? "取消快速启动" : "设为快速启动",
+                                      systemImage: server.isQuickLaunch ? "bolt.slash.circle" : "bolt.circle")
+                            }
+                        }
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
             .navigationTitle("Clash Dash")
             .navigationDestination(isPresented: $showQuickLaunchDestination) {
                 if let server = selectedQuickLaunchServer ?? viewModel.servers.first {
-                    ServerDetailView(server: server)
+                    ServerView(server: server)
                 }
             }
             .toolbar {
@@ -118,6 +78,12 @@ struct MainView: View {
             .refreshable {
                 await viewModel.checkAllServersStatus()
             }
+            .onAppear {
+                if let quickLaunchServer = viewModel.servers.first(where: { $0.isQuickLaunch }) {
+                    selectedQuickLaunchServer = quickLaunchServer
+                    showQuickLaunchDestination = true
+                }
+            }
             .alert("连接错误", isPresented: $viewModel.showError) {
                 Button("确定", role: .cancel) {}
             } message: {
@@ -128,12 +94,41 @@ struct MainView: View {
                 }
             }
         }
-        .onAppear {
-            if let quickLaunchServer = viewModel.servers.first(where: { $0.isQuickLaunch }) {
-                selectedQuickLaunchServer = quickLaunchServer
-                showQuickLaunchDestination = true
+    }
+    func emptyView() -> some View {
+        VStack(spacing: 20) {
+            Spacer()
+                .frame(height: 60)
+            
+            Image(systemName: "server.rack")
+                .font(.system(size: 50))
+                .foregroundColor(.secondary.opacity(0.7))
+                .padding(.bottom, 10)
+            
+            Text("没有服务器")
+                .font(.title2)
+                .fontWeight(.medium)
+            
+            Text("Tap [+] to add server")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+            
+            Button(action: {
+                showingAddSheet = true
+            }) {
+                Text("Add Server")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(width: 160, height: 44)
+                    .background(Color.blue)
+                    .cornerRadius(22)
             }
+            
+            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -180,58 +175,13 @@ struct ServerRowView: View {
                     }
                 }
                 
-                if server.status == .ok {
-<<<<<<< HEAD
-                    HStack(spacing: 4) {
-                        // 服务器来源标签
-                        Label {
-                            Text("Clash 控制器")
-                                .foregroundColor(.secondary)
-                        } icon: {
-                            Image(systemName: "server.rack")
-                                .foregroundColor(.secondary)
-                        }
-                        .font(.caption)
-                        
-                        Text("•")
-                            .foregroundColor(.secondary)
-                            .font(.caption)
-                        
-                        // 版本信息
-                        Label {
-                            Text(versionDisplay)
-                                .foregroundColor(.secondary)
-                        } icon: {
-                            Image(systemName: "tag")
-                                .foregroundColor(.secondary)
-                        }
-                        .font(.caption)
-                        .lineLimit(1)
-=======
-                    // 版本信息
-                    Label {
-                        Text(versionDisplay)
-                            .foregroundColor(.secondary)
-                    } icon: {
-                        Image(systemName: "server.rack")
-                            .foregroundColor(.secondary)
->>>>>>> 7f30e3b (update)
-                    }
-                    .font(.caption)
-                    .lineLimit(1)
-                } else if let errorMessage = server.errorMessage {
+               if let errorMessage = server.errorMessage {
                     Text(errorMessage)
                         .font(.caption)
                         .foregroundColor(server.status.color)
                         .lineLimit(1)
                 }
             }
-            
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.secondary)
         }
         .padding()
         .background(Color(.secondarySystemGroupedBackground))
@@ -239,29 +189,3 @@ struct ServerRowView: View {
     }
 }
 
-struct SettingsLinkRow<Destination: View>: View {
-    let title: String
-    let icon: String
-    let iconColor: Color
-    let destination: Destination
-    
-    var body: some View {
-        NavigationLink(destination: destination) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundColor(iconColor)
-                    .frame(width: 32)
-                
-                Text(title)
-                    .font(.body)
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-        }
-    }
-}

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ConnectionsView: View {
-    let server: ClashServer
+    
     @StateObject private var viewModel = ConnectionsViewModel()
     @StateObject private var tagViewModel = ClientTagViewModel()
     @State private var searchText = ""
@@ -10,6 +10,8 @@ struct ConnectionsView: View {
     @State private var showMenu = false
     @State private var showClientTagSheet = false
     @State private var selectedConnection: ClashConnection?
+    
+    let server: ClashServer
     
     // 添加确认对话框的状态
     @State private var showCloseAllConfirmation = false
@@ -218,6 +220,39 @@ struct ConnectionsView: View {
         return connections
     }
     
+    var trafficView: some View {
+        // 连接状态栏
+        HStack {
+            // 状态信息
+            Image(systemName: viewModel.connectionState.statusIcon)
+                .foregroundColor(viewModel.connectionState.statusColor)
+                .rotationEffect(viewModel.connectionState.isConnecting ? .degrees(360) : .degrees(0))
+                .animation(viewModel.connectionState.isConnecting ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: viewModel.connectionState)
+            
+            Text(viewModel.connectionState.message)
+                .font(.footnote)
+            
+            if viewModel.connectionState.isConnecting {
+                ProgressView()
+                    .scaleEffect(0.8)
+            }
+            
+            Spacer()
+            
+            // 流量统计
+            HStack(spacing: 12) {
+                Label(viewModel.formatBytes(viewModel.totalDownload), systemImage: "arrow.down.circle.fill")
+                    .foregroundColor(.blue)
+                Label(viewModel.formatBytes(viewModel.totalUpload), systemImage: "arrow.up.circle.fill")
+                    .foregroundColor(.green)
+            }
+            .font(.footnote)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(viewModel.connectionState.statusColor.opacity(0.1))
+    }
+    
     // 修改菜单按钮部分
     var menuButtons: some View {
         VStack(spacing: 12) {
@@ -378,37 +413,41 @@ struct ConnectionsView: View {
             Spacer(minLength: 0)
             
             // 添加设备过滤按钮
-            deviceFilterButton
+            // deviceFilterButton
             
-            // 排序按钮
-            Menu {
-                ForEach(SortOption.allCases, id: \.self) { option in
-                    Button {
-                        if selectedSortOption == option {
-                            isAscending.toggle()
-                        } else {
-                            selectedSortOption = option
-                            isAscending = false
-                        }
-                    } label: {
-                        HStack {
-                            Label(option.rawValue, systemImage: option.icon)
-                            if selectedSortOption == option {
-                                Image(systemName: isAscending ? "chevron.up" : "chevron.down")
-                            }
-                        }
-                    }
-                }
-            } label: {
-                Image(systemName: "arrow.up.arrow.down.circle.fill")
-                    .foregroundColor(.accentColor)
-                    .font(.system(size: 20))
-                    .frame(width: 28, height: 28)
-            }
+            
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
         .background(Color(.systemBackground))
+    }
+    
+    var orderButton: some View {
+        // 排序按钮
+        Menu {
+            ForEach(SortOption.allCases, id: \.self) { option in
+                Button {
+                    if selectedSortOption == option {
+                        isAscending.toggle()
+                    } else {
+                        selectedSortOption = option
+                        isAscending = false
+                    }
+                } label: {
+                    HStack {
+                        Label(option.rawValue, systemImage: option.icon)
+                        if selectedSortOption == option {
+                            Image(systemName: isAscending ? "chevron.up" : "chevron.down")
+                        }
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "arrow.up.arrow.down.circle.fill")
+                .foregroundColor(.accentColor)
+                .font(.system(size: 20))
+                .frame(width: 28, height: 28)
+        }
     }
     
     private func EmptyStateView() -> some View {
@@ -430,109 +469,95 @@ struct ConnectionsView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            VStack(spacing: 0) {
-                
-                // 过滤标签栏
-                filterBar
-                
-                // 搜索栏 - 有条件地显示
-                if showSearch {
-                    SearchBar(text: $searchText, placeholder: "搜索 IP、端口、主机名、设备标签")
-                        .padding(.horizontal)
-                        .padding(.vertical, 8)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-                
-                if viewModel.connections.isEmpty {
-                    EmptyStateView()
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            ForEach(filteredConnections) { connection in
-                                ConnectionRow(
-                                    connection: connection,
-                                    viewModel: viewModel,
-                                    tagViewModel: tagViewModel,
-                                    onClose: {
-                                        // 添加触觉反馈
-                                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                                        impactFeedback.impactOccurred()
-                                        viewModel.closeConnection(connection.id)
-                                    },
-                                    selectedConnection: $selectedConnection
-                                )
-                                .transition(.asymmetric(
-                                    insertion: .move(edge: .top).combined(with: .opacity),
-                                    removal: .move(edge: .bottom).combined(with: .opacity)
-                                ))
-                            }
-                        }
-                        .padding(.vertical, 8)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: filteredConnections)
-                    }
-                    .background(Color(.systemGroupedBackground))
-                }
+        NavigationStack {
+            
+            filterBar
+            
+            List(filteredConnections) { connection in
+                ConnectionRow(
+                    connection: connection,
+                    viewModel: viewModel,
+                    tagViewModel: tagViewModel,
+                    onClose: {
+                        // 添加触觉反馈
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                        impactFeedback.impactOccurred()
+                        viewModel.closeConnection(connection.id)
+                    },
+                    selectedConnection: $selectedConnection
+                )
+                .transition(.asymmetric(
+                    insertion: .move(edge: .top).combined(with: .opacity),
+                    removal: .move(edge: .bottom).combined(with: .opacity)
+                ))
             }
+            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: filteredConnections)
+            .buttonStyle(PlainButtonStyle())
+            
+//            ZStack(alignment: .bottomTrailing) {
+//                VStack(spacing: 0) {
+//                    
+//                    // 过滤标签栏
+//                    filterBar
+//                    
+//                    
+//                    
+//                    // 搜索栏 - 有条件地显示
+//                    if showSearch {
+//                        SearchBar(text: $searchText, placeholder: "搜索 IP、端口、主机名、设备标签")
+//                            .padding(.horizontal)
+//                            .padding(.vertical, 8)
+//                            .transition(.move(edge: .top).combined(with: .opacity))
+//                    }
+//                    
+//                    trafficView
+//                    
+////                    ScrollView {
+////                        LazyVStack {
+////                            
+////                        }
+////                    }
+//                    
+//                    if viewModel.connections.isEmpty {
+//                        EmptyStateView()
+//                    }
+//                    
+//                }
+//                menuButtons
+//                    .padding()
+//            }
+            // .searchable(text: $searchText)
             .refreshable {
                 await viewModel.refresh()
             }
-            
-            // 连接状态栏
-            HStack {
-                // 状态信息
-                Image(systemName: viewModel.connectionState.statusIcon)
-                    .foregroundColor(viewModel.connectionState.statusColor)
-                    .rotationEffect(viewModel.connectionState.isConnecting ? .degrees(360) : .degrees(0))
-                    .animation(viewModel.connectionState.isConnecting ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: viewModel.connectionState)
-                
-                Text(viewModel.connectionState.message)
-                    .font(.footnote)
-                
-                if viewModel.connectionState.isConnecting {
-                    ProgressView()
-                        .scaleEffect(0.8)
+            .sheet(item: $selectedConnection) { connection in
+                NavigationStack {
+                    ConnectionDetailView(
+                        connection: connection,
+                        viewModel: viewModel
+                    )
                 }
-                
-                Spacer()
-                
-                // 流量统计
-                HStack(spacing: 12) {
-                    Label(viewModel.formatBytes(viewModel.totalDownload), systemImage: "arrow.down.circle.fill")
-                        .foregroundColor(.blue)
-                    Label(viewModel.formatBytes(viewModel.totalUpload), systemImage: "arrow.up.circle.fill")
-                        .foregroundColor(.green)
-                }
-                .font(.footnote)
+                .presentationDragIndicator(.visible)
+                .presentationDetents([.large])
             }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .background(viewModel.connectionState.statusColor.opacity(0.1))
-            
-            menuButtons
-                .padding()
-        }
-        .sheet(item: $selectedConnection) { connection in
-            NavigationStack {
-                ConnectionDetailView(
-                    connection: connection,
-                    viewModel: viewModel
+            .onAppear {
+                viewModel.startMonitoring(server: server)
+            }
+            .onDisappear {
+                viewModel.stopMonitoring()
+            }
+            .sheet(isPresented: $showClientTagSheet) {
+                ClientTagView(
+                    viewModel: viewModel,
+                    tagViewModel: tagViewModel
                 )
             }
-            .presentationDragIndicator(.visible)
-            .presentationDetents([.large])
-        }
-        .onAppear {
-            viewModel.startMonitoring(server: server)
-        }
-        .onDisappear {
-            viewModel.stopMonitoring()
-        }
-        .sheet(isPresented: $showClientTagSheet) {
-            ClientTagView(
-                viewModel: viewModel,
-                tagViewModel: tagViewModel
-            )
+            .navigationTitle("Connections")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(trailing: HStack {
+                deviceFilterButton
+                orderButton
+            })
         }
     }
 }

@@ -21,21 +21,23 @@ struct SettingsView: View {
                     }
                 }
             }
-            .navigationTitle("设置")
+            
+            .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("保存") {
+                    Button("Save") {
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
             }
         }
+        
         
     }
 }
