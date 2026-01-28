@@ -16,20 +16,6 @@ extension View {
     }
 }
 
-struct LoadingView: View {
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "network")
-                .font(.system(size: 36))
-                .foregroundStyle(.secondary)
-            Text("加载中")
-                .font(.headline)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
 struct ProxyView: View {
     let server: ClashServer
     @StateObject private var viewModel: ProxyViewModel
@@ -49,30 +35,19 @@ struct ProxyView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                if viewModel.groups.isEmpty {
-                    if #available(iOS 17.0, *) {
-                        ContentUnavailableView {
-                            Label("加载中", systemImage: "network")
-                        }
-                        .frame(maxHeight: .infinity)
-                    } else {
-                        LoadingView()
-                    }
-                } else {
-                    // 代理组概览卡片
-                    ProxyGroupsOverview(
-                        groups: viewModel.getSortedGroups(),
+                // 代理组概览卡片
+                ProxyGroupsOverview(
+                    groups: viewModel.getSortedGroups(),
+                    viewModel: viewModel
+                )
+                
+                // 代理提供者部分
+                if !viewModel.providers.isEmpty {
+                    ProxyProvidersSection(
+                        providers: viewModel.providers,
+                        nodes: viewModel.providerNodes,
                         viewModel: viewModel
                     )
-                    
-                    // 代理提供者部分
-                    if !viewModel.providers.isEmpty {
-                        ProxyProvidersSection(
-                            providers: viewModel.providers,
-                            nodes: viewModel.providerNodes,
-                            viewModel: viewModel
-                        )
-                    }
                 }
             }
             .padding()

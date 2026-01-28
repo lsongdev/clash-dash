@@ -143,6 +143,7 @@ struct RulesView: View {
                 }
             )
         }
+        .background(Color(.systemGroupedBackground))
         .refreshable {
             await viewModel.fetchData()
         }

@@ -75,8 +75,6 @@ struct MainView: View {
                             }
                             .buttonStyle(PlainButtonStyle())
                         }
-                        
-                        .padding()
                         .background(Color(.secondarySystemGroupedBackground))
                         .cornerRadius(16)
                     }
@@ -112,6 +110,7 @@ struct MainView: View {
             }
             .sheet(isPresented: $showingSetting) {
                 SettingsView(viewModel: viewModel)
+                    .presentationDetents([.medium, .large])
             }
             .sheet(item: $editingServer) { server in
                 EditServerView(viewModel: viewModel, server: server)
@@ -182,6 +181,7 @@ struct ServerRowView: View {
                 }
                 
                 if server.status == .ok {
+<<<<<<< HEAD
                     HStack(spacing: 4) {
                         // 服务器来源标签
                         Label {
@@ -207,7 +207,18 @@ struct ServerRowView: View {
                         }
                         .font(.caption)
                         .lineLimit(1)
+=======
+                    // 版本信息
+                    Label {
+                        Text(versionDisplay)
+                            .foregroundColor(.secondary)
+                    } icon: {
+                        Image(systemName: "server.rack")
+                            .foregroundColor(.secondary)
+>>>>>>> 7f30e3b (update)
                     }
+                    .font(.caption)
+                    .lineLimit(1)
                 } else if let errorMessage = server.errorMessage {
                     Text(errorMessage)
                         .font(.caption)
@@ -223,7 +234,6 @@ struct ServerRowView: View {
                 .foregroundColor(.secondary)
         }
         .padding()
-        .frame(height: 80)
         .background(Color(.secondarySystemGroupedBackground))
         .cornerRadius(16)
     }
