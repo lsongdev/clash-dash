@@ -55,7 +55,7 @@ struct RulesTab: View {
     func loadData() {
         Task {
             rules = try await appManager.api.fetchRules(server: server)
-            providers = try await appManager.api.fetchRulesProviders(server: server)
+            providers = try await appManager.api.fetchRuleProviders(server: server)
         }
     }
 }
