@@ -25,7 +25,7 @@ class AppManager: ObservableObject {
     @Published var alertMessage = ""
     
     // MARK: - Server Management
-    @Published var currentServer: ClashServer? = nil
+    @Published var currentServer: ClashServer =  ClashServer(name: "demo", host: "192.168.2.1", port: "7880", secret: "clash@lsong.org")
     
     @Published var servers: [ClashServer] = []
     @Published var showError = false

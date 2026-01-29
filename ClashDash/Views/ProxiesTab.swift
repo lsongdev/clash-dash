@@ -23,14 +23,13 @@ struct ProxiesTab: View {
     @State private var showProviderSheet = false
     @Namespace private var animation
     
-    let server: ClashServer
+    // let server: ClashServer
     
     // 添加触觉反馈生成器
     private let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
     
-    init(server: ClashServer) {
-        self.server = server
-        self._viewModel = StateObject(wrappedValue: ProxyViewModel(server: server))
+    init() {
+        self._viewModel = StateObject(wrappedValue: ProxyViewModel(server: AppManager.shared.currentServer))
     }
     
     var body: some View {

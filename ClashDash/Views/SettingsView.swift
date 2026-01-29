@@ -6,7 +6,7 @@ struct SettingsView: View {
     @State private var showingUpgradeAlert = false
     @State private var showingRestartAlert = false
     
-    let server: ClashServer
+    let server: ClashServer = AppManager.shared.currentServer
     
     var body: some View {
         NavigationStack {
@@ -464,7 +464,7 @@ struct AboutView: View {
         List {
             Section {
                 HStack(spacing: 16) {
-                    Image(systemName: "cloud.fill")
+                    Image(systemName: "cat.fill")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 60, height: 60)
@@ -484,7 +484,7 @@ struct AboutView: View {
             
             // Additional Info Section
             Section(header: Text("About")) {
-                Link(destination: URL(string: "https://github.com/lsongdev/cloudflare-ios")!) {
+                Link(destination: URL(string: "https://github.com/lsongdev/clash-dash")!) {
                     HStack {
                         Text("GitHub")
                         Spacer()

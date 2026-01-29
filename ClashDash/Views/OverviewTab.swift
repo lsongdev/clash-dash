@@ -12,8 +12,6 @@ struct OverviewTab: View {
     @ObservedObject var appManager = AppManager.shared
     @StateObject private var monitor = NetworkMonitor()
     
-    let server: ClashServer
-    
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
@@ -110,7 +108,7 @@ struct OverviewTab: View {
             .padding(.bottom)
         }
         .background(Color(.systemGroupedBackground))
-        .onAppear { monitor.startMonitoring(server: server) }
+        .onAppear { monitor.startMonitoring(server: AppManager.shared.currentServer) }
         .onDisappear { monitor.stopMonitoring() }
         // .navigationTitle(appManager.appName)
         .navigationTitle("Overview")

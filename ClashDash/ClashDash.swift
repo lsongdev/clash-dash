@@ -10,10 +10,6 @@ import Network
 
 @main
 struct ClashDashApp: App {
-    @StateObject private var appManager = AppManager()
-    @StateObject private var networkMonitor = NetworkMonitor()
-    
-    
     init() {
         // 请求本地网络访问权限
         let localNetworkAuthorization = LocalNetworkAuthorization()
@@ -24,17 +20,7 @@ struct ClashDashApp: App {
     
     var body: some Scene {
         WindowGroup {
-            if let currentServer = appManager.currentServer {
-                ServerView(server: currentServer)
-                    .environmentObject(networkMonitor)
-                    .environmentObject(appManager)
-            } else {
-                ServerListView() { selectedServer in
-                    appManager.selectServer(selectedServer)
-                }
-                .environmentObject(appManager)
-                .environmentObject(networkMonitor)
-            }
+            MainView()
         }
     }
 }

@@ -1,14 +1,12 @@
 import SwiftUI
 
 struct ServerListView: View {
-    @EnvironmentObject var appManager: AppManager
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var appManager = AppManager.shared
     @State private var showingSetting = false
     @State private var showingAddSheet = false
     @State private var editingServer: ClashServer?
-    @State private var selectedQuickLaunchServer: ClashServer?
     @State private var showQuickLaunchDestination = false
-    @State private var showingAddOpenWRTSheet = false
-    @Environment(\.dismiss) private var dismiss
     
     var onSelect: ((ClashServer) -> Void)?
     
@@ -17,51 +15,44 @@ struct ServerListView: View {
             
             if appManager.servers.isEmpty {
                 emptyView()
-            } else {
-                serverList()
             }
-        }
-    }
-    
-    private func serverList() -> some View {
-        List(appManager.servers) { server in
-            serverListItem(server)
-        }
-        .navigationTitle("Servers")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: {
-                    showingAddSheet = true
-                }) {
-                    Image(systemName: "plus")
+            
+            List(appManager.servers) { server in
+                serverListItem(server)
+            }
+            .navigationTitle("Servers")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: {
+                        showingAddSheet = true
+                    }) {
+                        Image(systemName: "plus")
+                    }
                 }
             }
-        }
-        .navigationDestination(isPresented: $showingAddSheet) {
-            ServerFormView() { server in
-                appManager.addServer(server)
+            .navigationDestination(isPresented: $showingAddSheet) {
+                ServerFormView() { server in
+                    appManager.addServer(server)
+                }
             }
-        }
-        .navigationDestination(item: $editingServer) { server in
-            ServerFormView(server: server) { updatedServer in
-                appManager.updateServer(updatedServer)
+            .navigationDestination(item: $editingServer) { server in
+                ServerFormView(server: server) { updatedServer in
+                    appManager.updateServer(updatedServer)
+                }
             }
-        }
-        .refreshable {
-            await appManager.checkAllServersStatus()
-        }
-        .alert("连接错误", isPresented: $appManager.showError) {
-            Button("确定", role: .cancel) {}
-        } message: {
-            if let details = appManager.errorDetails {
-                Text("\(appManager.errorMessage ?? "")\n\n\(details)")
-            } else {
-                Text(appManager.errorMessage ?? "")
+            .refreshable {
+                await appManager.checkAllServersStatus()
             }
-        }
-        .onAppear {
-            
+            .alert("连接错误", isPresented: $appManager.showError) {
+                Button("确定", role: .cancel) {}
+            } message: {
+                if let details = appManager.errorDetails {
+                    Text("\(appManager.errorMessage ?? "")\n\n\(details)")
+                } else {
+                    Text(appManager.errorMessage ?? "")
+                }
+            }
         }
     }
     
@@ -69,7 +60,7 @@ struct ServerListView: View {
     private func serverListItem(_ server: ClashServer) -> some View {
         ServerRowView(
             server: server,
-            isSelected: appManager.currentServer?.id == server.id
+            isSelected: appManager.currentServer.id == server.id
         )
         .onTapGesture {
             onSelect?(server)
@@ -77,7 +68,7 @@ struct ServerListView: View {
         }
         .contextMenu {
             deleteButton(for: server)
-            editButton(for: server) 
+            editButton(for: server)
         }
     }
     
@@ -191,10 +182,7 @@ struct ServerRowView: View {
                         .lineLimit(1)
                 }
             }
-        }
-        // .padding()
-        // .background(Color(.secondarySystemGroupedBackground))
-        // .cornerRadius(16)
+        } 
     }
 }
 

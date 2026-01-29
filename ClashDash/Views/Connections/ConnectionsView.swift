@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ConnectionsView: View {
+struct ConnectionsTab: View {
     
     @StateObject private var viewModel = ConnectionsViewModel()
     @StateObject private var tagViewModel = ClientTagViewModel()
@@ -11,7 +11,7 @@ struct ConnectionsView: View {
     @State private var showClientTagSheet = false
     @State private var selectedConnection: ClashConnection?
     
-    let server: ClashServer
+    let server: ClashServer = AppManager.shared.currentServer
     
     // 添加确认对话框的状态
     @State private var showCloseAllConfirmation = false

@@ -1,18 +1,16 @@
 import SwiftUI
 
-struct ServerView: View {
+struct MainView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var networkMonitor = NetworkMonitor()
-    @EnvironmentObject var appManager: AppManager
+    @ObservedObject var appManager = AppManager.shared
     @State private var selectedTab = 0
-    
-    @State var server: ClashServer
-    
+     
     var body: some View {
         TabView(selection: $selectedTab) {
             // 概览标签页
             NavigationStack {
-                OverviewTab(server: server)
+                OverviewTab()
                     .toolbar {
                         ToolbarItem(placement: .navigation) {
                             ServerPickerMenu()
@@ -25,7 +23,7 @@ struct ServerView: View {
             .tag(0)
             // 代理标签页
             NavigationStack {
-                ProxiesTab(server: server)
+                ProxiesTab()
                     .toolbar {
                         ToolbarItem(placement: .navigation) {
                             ServerPickerMenu()
@@ -39,7 +37,7 @@ struct ServerView: View {
             
             // 规则标签页
             NavigationStack {
-                RulesTab(server: server)
+                RulesTab()
                     .toolbar {
                         ToolbarItem(placement: .navigation) {
                             ServerPickerMenu()
@@ -53,7 +51,7 @@ struct ServerView: View {
             
             // 连接标签页
             NavigationStack {
-                ConnectionsView(server: server)
+                ConnectionsTab()
                     .toolbar {
                         ToolbarItem(placement: .navigation) {
                             ServerPickerMenu()
@@ -67,7 +65,7 @@ struct ServerView: View {
             
             // 更多标签页
             NavigationStack {
-                SettingsView(server: server)
+                SettingsView()
                     .toolbar {
                         ToolbarItem(placement: .navigation) {
                             ServerPickerMenu()
@@ -79,12 +77,10 @@ struct ServerView: View {
             }
             .tag(4)
         }
-        .navigationTitle(server.displayName)
+        .navigationTitle(appManager.appName)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            networkMonitor.startMonitoring(server: server)
-            // 保存当前选择的服务器到 AppManager
-            appManager.saveCurrentServer(server)
+            networkMonitor.startMonitoring(server: appManager.currentServer)
         }
         .onDisappear {
             networkMonitor.stopMonitoring()
@@ -96,28 +92,20 @@ struct ServerView: View {
 // 服务器选择器（Menu 或 Sheet 方式）
 struct ServerPickerMenu: View {
     @State private var showServerList = false
-    @EnvironmentObject var appManager: AppManager 
+    @ObservedObject var appManager = AppManager.shared
     
     var body: some View {
         Button {
             showServerList = true
         } label: {
             HStack(spacing: 8) {
-                if let server = appManager.currentServer {
-                    // 状态指示器绿点
-                    Circle()
-                        .fill(server.status.color)
-                        .frame(width: 8, height: 8)
-                    Text(server.displayName)
-                        .lineLimit(1)
-                        .font(.subheadline)
-                    
-                } else {
-                    Image(systemName: "cat")
-                        .frame(width: 8, height: 8)
-                    Text(appManager.appName)
-                        .font(.subheadline)
-                }
+                // 状态指示器绿点
+                Circle()
+                    .fill(appManager.currentServer.status.color)
+                    .frame(width: 8, height: 8)
+                Text(appManager.currentServer.displayName)
+                    .lineLimit(1)
+                    .font(.subheadline)
             }
             .frame(minWidth: 50, maxWidth: 110)
         }

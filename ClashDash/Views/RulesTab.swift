@@ -3,11 +3,10 @@ import SwiftUI
 struct RulesTab: View {
     @StateObject private var viewModel: RulesViewModel
     
-    let server: ClashServer
+    // let server: ClashServer
     
-    init(server: ClashServer) {
-        self.server = server
-        _viewModel = StateObject(wrappedValue: RulesViewModel(server: server))
+    init() {
+        _viewModel = StateObject(wrappedValue: RulesViewModel(server: AppManager.shared.currentServer))
     }
     
     var body: some View {
