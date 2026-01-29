@@ -245,7 +245,7 @@ class ProxyViewModel: ObservableObject {
                         // 对 DIRECT 节点进行延迟测试
                         if let directNode = self.nodes.first(where: { $0.name == "DIRECT" }) {
                             // print("Testing DIRECT node delay")
-                            await testNodeDelay(nodeName: "DIRECT")
+                            await testNodeDelay(nodeName: directNode.name)
                         }
                         
                         self.lastUpdated = Date()
@@ -348,32 +348,6 @@ class ProxyViewModel: ObservableObject {
                httpsResponse.statusCode == 400 {
                 // print("SSL 连接失败，服务器可能不支持 HTTPS")
                 return
-            }
-            
-            // 检查是否需要自动断开旧连接
-            if UserDefaults.standard.bool(forKey: "autoDisconnectOldProxy") {
-                // 获取当前活跃的连接
-                guard var connectionsRequest = makeRequest(path: "connections") else { return }
-                let (data, _) = try await URLSession.shared.data(for: connectionsRequest)
-                
-                if let connectionsResponse = try? JSONDecoder().decode(ConnectionsResponse.self, from: data) {
-                    // 遍所有活跃连接
-                    for connection in connectionsResponse.connections {
-                        // 如果连接的代理链包含当前切换的代理名称,则关闭该连接
-                        if connection.chains.contains(proxyName) {
-                            // 构建关闭连接的请求
-                            guard var closeRequest = makeRequest(path: "connections/\(connection.id)") else { continue }
-                            closeRequest.httpMethod = "DELETE"
-                            
-                            // 发送关闭请求
-                            let (_, closeResponse) = try await URLSession.shared.data(for: closeRequest)
-                            if let closeHttpResponse = closeResponse as? HTTPURLResponse,
-                               closeHttpResponse.statusCode == 204 {
-                                // print("成功关闭连接: \(connection.id)")
-                            }
-                        }
-                    }
-                }
             }
             
             if proxyName != "REJECT" {

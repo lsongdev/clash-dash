@@ -34,7 +34,8 @@ class AppManager: ObservableObject {
     
     private static let currentServerKey = "CurrentSelectedServer"
     private static let saveKey = "SavedClashServers"
-    private let api = ClashAPI()
+    
+    let api = ClashAPI()
     
     init() {
         loadServers()

@@ -47,26 +47,23 @@ struct ClashServer: Identifiable, Codable, Hashable {
         return "\(host):\(port)"
     }
     
-    var baseURL: URL? {
-        let cleanURL = host.replacingOccurrences(of: "^https?://", with: "", options: .regularExpression)
+    var url: URL {
+        let host = host.replacingOccurrences(of: "^https?://", with: "", options: .regularExpression)
         let scheme = useSSL ? "https" : "http"
-        return URL(string: "\(scheme)://\(cleanURL):\(port)")
+        return URL(string: "\(scheme)://\(host):\(port)")!
     }
     
-    var proxyProvidersURL: URL? {
-        baseURL?.appendingPathComponent("providers/proxies")
+    var PROVIDERS_PROXIES: URL {
+        url.appendingPathComponent("providers/proxies")
     }
     
     var isValid: Bool {
         host.isEmpty || port.isEmpty || secret.isEmpty
     }
     
-    func makeRequest(url: URL?) throws -> URLRequest {
-        guard let url = url else {
-            throw NetworkError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
+    func makeRequest(path: String, method: String = "GET") -> URLRequest {
+        var request = URLRequest(url: url.appendingPathComponent(path))
+        request.httpMethod = method
         request.setValue("Bearer \(secret)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 10

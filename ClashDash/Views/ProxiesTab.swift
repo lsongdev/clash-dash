@@ -56,6 +56,7 @@ struct ProxiesTab: View {
         .task {
             await viewModel.fetchProxies()
         }
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("Proxies")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -83,14 +84,14 @@ struct ProxiesTab: View {
                 }
             }
         }
-        .sheet(isPresented: $showProviderSheet) {
-            ProvidersSheetView(
-                providers: viewModel.providers,
-                nodes: viewModel.providerNodes,
-                viewModel: viewModel
-            )
-            .presentationDetents([.medium, .large])
-        }
+//        .sheet(isPresented: $showProviderSheet) {
+//            ProvidersSheetView(
+//                providers: viewModel.providers,
+//                nodes: viewModel.providerNodes,
+//                viewModel: viewModel
+//            )
+//            .presentationDetents([.medium, .large])
+//        }
     }
     
     private func refreshData() async {

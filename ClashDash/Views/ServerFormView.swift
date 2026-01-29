@@ -9,7 +9,7 @@ struct ServerFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
+                Section("服务器信息") {
                     TextField("名称（可选）", text: $server.name)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -27,15 +27,6 @@ struct ServerFormView: View {
                             Image(systemName: "lock.fill")
                                 .foregroundColor(server.useSSL ? .green : .secondary)
                         }
-                    }
-                } header: {
-                    Text("服务器信息")
-                } footer: {
-                    VStack(alignment: .leading) {
-                        Text("如果服务器启用了 HTTPS，请打开 HTTPS 开关")
-                        Text("根据苹果的应用传输安全(App Transport Security, ATS)策略，iOS 应用在与域名通信时必须使用 HTTPS")
-                            .foregroundColor(.secondary)
-                            .padding(.top, 4)
                     }
                 }
             }

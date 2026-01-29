@@ -3,10 +3,8 @@ import SwiftUI
 struct ServerListView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var appManager = AppManager.shared
-    @State private var showingSetting = false
     @State private var showingAddSheet = false
     @State private var editingServer: ClashServer?
-    @State private var showQuickLaunchDestination = false
     
     var onSelect: ((ClashServer) -> Void)?
     
@@ -18,19 +16,23 @@ struct ServerListView: View {
             }
             
             List(appManager.servers) { server in
-                serverListItem(server)
+                ServerRowView(
+                    server: server,
+                    isSelected: appManager.currentServer.id == server.id
+                )
+                .onTapGesture {
+                    onSelect?(server)
+                    dismiss()
+                }
+                .contextMenu {
+                    editButton(for: server)
+                    deleteButton(for: server)
+                }
+                
             }
             .navigationTitle("Servers")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: {
-                        showingAddSheet = true
-                    }) {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
+            .navigationBarItems(trailing: addButton)
             .navigationDestination(isPresented: $showingAddSheet) {
                 ServerFormView() { server in
                     appManager.addServer(server)
@@ -41,6 +43,7 @@ struct ServerListView: View {
                     appManager.updateServer(updatedServer)
                 }
             }
+            
             .refreshable {
                 await appManager.checkAllServersStatus()
             }
@@ -56,19 +59,11 @@ struct ServerListView: View {
         }
     }
     
-    @ViewBuilder
-    private func serverListItem(_ server: ClashServer) -> some View {
-        ServerRowView(
-            server: server,
-            isSelected: appManager.currentServer.id == server.id
-        )
-        .onTapGesture {
-            onSelect?(server)
-            dismiss()
-        }
-        .contextMenu {
-            deleteButton(for: server)
-            editButton(for: server)
+    var addButton: some View {
+        Button(action: {
+            showingAddSheet = true
+        }) {
+            Image(systemName: "plus")
         }
     }
     
@@ -97,7 +92,7 @@ struct ServerListView: View {
                 .foregroundColor(.secondary.opacity(0.7))
                 .padding(.bottom, 10)
             
-            Text("没有服务器")
+            Text("No servers")
                 .font(.title2)
                 .fontWeight(.medium)
             
@@ -150,8 +145,16 @@ struct ServerRowView: View {
                     .fill(server.status.color.opacity(0.2))
                     .frame(width: 40, height: 40)
                 
-                Image(systemName: statusIcon)
-                    .foregroundColor(server.status.color)
+                if isSelected {
+                    Image(systemName: statusIcon)
+                        .foregroundColor(server.status.color)
+                } else {
+                    Circle()
+                        .fill(server.status.color)
+                        .frame(width: 20, height: 20)
+                }
+                
+                
             }
             
             // 服务器信息
@@ -167,12 +170,7 @@ struct ServerRowView: View {
                             .font(.subheadline)
                     }
                     
-                    if isSelected {
-                        Spacer()
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.blue)
-                            .font(.subheadline)
-                    }
+                    
                 }
                 
                if let errorMessage = server.errorMessage {
@@ -182,7 +180,7 @@ struct ServerRowView: View {
                         .lineLimit(1)
                 }
             }
-        } 
+        }
     }
 }
 
