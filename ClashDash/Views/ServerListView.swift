@@ -163,14 +163,6 @@ struct ServerRowView: View {
                     Text(server.displayName)
                         .font(.headline)
                         .lineLimit(1)
-                    
-                    if server.isQuickLaunch {
-                        Image(systemName: "bolt.circle.fill")
-                            .foregroundColor(.yellow)
-                            .font(.subheadline)
-                    }
-                    
-                    
                 }
                 
                if let errorMessage = server.errorMessage {

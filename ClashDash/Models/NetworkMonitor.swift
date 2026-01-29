@@ -36,14 +36,7 @@ class NetworkMonitor: ObservableObject {
             isMonitoring = true
             connectToTraffic(server: server)
             connectToConnections(server: server)
-            
-            if server.serverType != .premium {
-                connectToMemory(server: server)
-            } else {
-                DispatchQueue.main.async {
-                    self.memoryUsage = "N/A"
-                }
-            }
+            connectToMemory(server: server)
         }
     }
     
@@ -64,7 +57,7 @@ class NetworkMonitor: ObservableObject {
             connectToConnections(server: server)
         }
         
-        if server.serverType != .premium && !isConnected[.memory, default: false] {
+        if !isConnected[.memory, default: false] {
             connectToMemory(server: server)
         }
     }
@@ -76,10 +69,7 @@ class NetworkMonitor: ObservableObject {
         
         trafficTask?.cancel(with: .goingAway, reason: nil)
         connectionsTask?.cancel(with: .goingAway, reason: nil)
-        
-        if server?.serverType != .premium {
-            memoryTask?.cancel(with: .goingAway, reason: nil)
-        }
+        memoryTask?.cancel(with: .goingAway, reason: nil)
         
         isConnected.removeAll()
         server = nil

@@ -1,50 +1,22 @@
 import SwiftUI
 
 struct ClashServer: Identifiable, Codable, Hashable {
-    let id: UUID
-    var name: String
-    var host: String
-    var port: String
-    var secret: String
-    var status: ServerStatus
-    var version: String?
-    var useSSL: Bool
-    var errorMessage: String?
-    var serverType: ServerType?
-    var isQuickLaunch: Bool = false
+    let id: UUID = UUID()
+    var name: String = ""
+    var host: String = ""
+    var port: String = ""
+    var secret: String = ""
+    var useSSL: Bool = false
+    var status: ServerStatus = .unknown
+    var version: String? = ""
+    var errorMessage: String? = ""
     
-    enum ServerType: String, Codable {
-        case unknown = "Unknown"
-        case meta = "Meta"
-        case premium = "Premium"
-        case singbox = "Sing-Box"
-    }
-    
-    init(id: UUID = UUID(), 
-         name: String = "", 
-         host: String = "",
-         port: String = "",
-         secret: String = "", 
-         status: ServerStatus = .unknown, 
-         version: String? = nil,
-         useSSL: Bool = false,
-         isQuickLaunch: Bool = false) {
-        self.id = id
-        self.name = name
-        self.host = host
-        self.port = port
-        self.secret = secret
-        self.status = status
-        self.version = version
-        self.useSSL = useSSL
-        self.isQuickLaunch = isQuickLaunch
+    var isValid: Bool {
+        host.isEmpty || port.isEmpty || secret.isEmpty
     }
     
     var displayName: String {
-        if !name.isEmpty {
-            return name
-        }
-        return "\(host):\(port)"
+        return name.isEmpty ? "\(host):\(port)" : name
     }
     
     var url: URL {
@@ -53,20 +25,12 @@ struct ClashServer: Identifiable, Codable, Hashable {
         return URL(string: "\(scheme)://\(host):\(port)")!
     }
     
-    var PROVIDERS_PROXIES: URL {
-        url.appendingPathComponent("providers/proxies")
-    }
-    
-    var isValid: Bool {
-        host.isEmpty || port.isEmpty || secret.isEmpty
-    }
-    
     func makeRequest(path: String, method: String = "GET") -> URLRequest {
         var request = URLRequest(url: url.appendingPathComponent(path))
-        request.httpMethod = method
         request.setValue("Bearer \(secret)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 10
+        request.httpMethod = method
         return request
     }
     

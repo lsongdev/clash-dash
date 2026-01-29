@@ -77,53 +77,34 @@ class AppManager: ObservableObject {
         saveServers()
     }
     
-    func setQuickLaunch(_ server: ClashServer) {
-        // 如果当前服务器已经是快速启动，则取消
-        if server.isQuickLaunch {
-            if let index = servers.firstIndex(where: { $0.id == server.id }) {
-                servers[index].isQuickLaunch = false
-            }
-        } else {
-            // 否则，先将所有服务器的 isQuickLaunch 设为 false
-            for index in servers.indices {
-                servers[index].isQuickLaunch = false
-            }
-            
-            // 然后设置选中的服务器为快速启动
-            if let index = servers.firstIndex(where: { $0.id == server.id }) {
-                servers[index].isQuickLaunch = true
-            }
-        }
-        
-        // 保存更改
-        saveServers()
-    }
-    
     // MARK: - Server Status Check
-    @MainActor
     func checkAllServersStatus() async {
         for server in servers {
             await checkServerStatus(server)
         }
     }
     
-    @MainActor
     private func checkServerStatus(_ server: ClashServer) async {
-        let (status, version, serverType, errorMessage) = await api.checkServerVersion(server)
-        
-        if let index = servers.firstIndex(where: { $0.id == server.id }) {
-            var updatedServer = server
-            updatedServer.status = status
-            if let version = version {
-                updatedServer.version = version
-            }
-            if let serverType = serverType {
-                updatedServer.serverType = serverType
-            }
-            updatedServer.errorMessage = errorMessage
-            servers[index] = updatedServer
-            saveServers()
+        do {
+            let version = try await api.getVersion(server)
+            print(version)
+        } catch {
+            print(error)
         }
+        
+//        if let index = servers.firstIndex(where: { $0.id == server.id }) {
+//            var updatedServer = server
+//            updatedServer.status = status
+//            if let version = version {
+//                updatedServer.version = version
+//            }
+//            if let serverType = serverType {
+//                updatedServer.serverType = serverType
+//            }
+//            updatedServer.errorMessage = errorMessage
+//            servers[index] = updatedServer
+//            saveServers()
+//        }
     }
     
     func showAlert(title: String, message: String) {
