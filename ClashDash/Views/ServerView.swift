@@ -3,6 +3,7 @@ import SwiftUI
 struct ServerView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var networkMonitor = NetworkMonitor()
+    @EnvironmentObject var appManager: AppManager
     @State private var selectedTab = 0
     
     @State var server: ClashServer
@@ -82,6 +83,8 @@ struct ServerView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             networkMonitor.startMonitoring(server: server)
+            // 保存当前选择的服务器到 AppManager
+            appManager.saveCurrentServer(server)
         }
         .onDisappear {
             networkMonitor.stopMonitoring()
@@ -92,21 +95,37 @@ struct ServerView: View {
 
 // 服务器选择器（Menu 或 Sheet 方式）
 struct ServerPickerMenu: View {
-    @State private var showSheet = false
+    @State private var showServerList = false
+    @EnvironmentObject var appManager: AppManager 
     
     var body: some View {
         Button {
-            showSheet = true
+            showServerList = true
         } label: {
-            HStack {
-                Image(systemName: "server.rack")
-                Text("server 1")
-                    .lineLimit(1)
+            HStack(spacing: 8) {
+                if let server = appManager.currentServer {
+                    // 状态指示器绿点
+                    Circle()
+                        .fill(server.status.color)
+                        .frame(width: 8, height: 8)
+                    Text(server.displayName)
+                        .lineLimit(1)
+                        .font(.subheadline)
+                    
+                } else {
+                    Image(systemName: "cat")
+                        .frame(width: 8, height: 8)
+                    Text(appManager.appName)
+                        .font(.subheadline)
+                }
             }
+            .frame(minWidth: 50, maxWidth: 110)
         }
-        .sheet(isPresented: $showSheet) {
-            ServerListView()
-                .presentationDetents([.medium, .large])
+        .sheet(isPresented: $showServerList) {
+            ServerListView { selectedServer in
+                appManager.selectServer(selectedServer)
+            }
+            .presentationDetents([.medium, .large])
         }
     }
 }

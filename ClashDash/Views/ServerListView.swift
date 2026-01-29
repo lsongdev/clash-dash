@@ -1,75 +1,99 @@
 import SwiftUI
 
 struct ServerListView: View {
-    @StateObject private var viewModel = ServerViewModel()
+    @EnvironmentObject var appManager: AppManager
     @State private var showingSetting = false
     @State private var showingAddSheet = false
     @State private var editingServer: ClashServer?
     @State private var selectedQuickLaunchServer: ClashServer?
     @State private var showQuickLaunchDestination = false
     @State private var showingAddOpenWRTSheet = false
+    @Environment(\.dismiss) private var dismiss
+    
+    var onSelect: ((ClashServer) -> Void)?
     
     var body: some View {
         NavigationStack {
             
-            if viewModel.servers.isEmpty {
+            if appManager.servers.isEmpty {
                 emptyView()
+            } else {
+                serverList()
             }
-            // 服务器卡片列表
-            List(viewModel.servers) { server in
-                ServerRowView(server: server)
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            viewModel.deleteServer(server)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                        
-                        Button {
-                            editingServer = server
-                        } label: {
-                            Label("Edit", systemImage: "pencil")
-                        }
-                        
-                        Button {
-                            viewModel.setQuickLaunch(server)
-                        } label: {
-                            Label(server.isQuickLaunch ? "取消快速启动" : "设为快速启动",
-                                  systemImage: server.isQuickLaunch ? "bolt.slash.circle" : "bolt.circle")
-                        }
-                    }
-            }
-            .navigationTitle("Servers")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(isPresented: $showQuickLaunchDestination) {
-                if let server = selectedQuickLaunchServer ?? viewModel.servers.first {
-                    ServerView(server: server)
+        }
+    }
+    
+    private func serverList() -> some View {
+        List(appManager.servers) { server in
+            serverListItem(server)
+        }
+        .navigationTitle("Servers")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {
+                    showingAddSheet = true
+                }) {
+                    Image(systemName: "plus")
                 }
             }
-            .sheet(isPresented: $showingAddSheet) {
-                AddServerView(viewModel: viewModel)
+        }
+        .navigationDestination(isPresented: $showingAddSheet) {
+            ServerFormView() { server in
+                appManager.addServer(server)
             }
-            .sheet(item: $editingServer) { server in
-                EditServerView(viewModel: viewModel, server: server)
+        }
+        .navigationDestination(item: $editingServer) { server in
+            ServerFormView(server: server) { updatedServer in
+                appManager.updateServer(updatedServer)
             }
-            .refreshable {
-                await viewModel.checkAllServersStatus()
+        }
+        .refreshable {
+            await appManager.checkAllServersStatus()
+        }
+        .alert("连接错误", isPresented: $appManager.showError) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            if let details = appManager.errorDetails {
+                Text("\(appManager.errorMessage ?? "")\n\n\(details)")
+            } else {
+                Text(appManager.errorMessage ?? "")
             }
-            .onAppear {
-                if let quickLaunchServer = viewModel.servers.first(where: { $0.isQuickLaunch }) {
-                    selectedQuickLaunchServer = quickLaunchServer
-                    showQuickLaunchDestination = true
-                }
-            }
-            .alert("连接错误", isPresented: $viewModel.showError) {
-                Button("确定", role: .cancel) {}
-            } message: {
-                if let details = viewModel.errorDetails {
-                    Text("\(viewModel.errorMessage ?? "")\n\n\(details)")
-                } else {
-                    Text(viewModel.errorMessage ?? "")
-                }
-            }
+        }
+        .onAppear {
+            
+        }
+    }
+    
+    @ViewBuilder
+    private func serverListItem(_ server: ClashServer) -> some View {
+        ServerRowView(
+            server: server,
+            isSelected: appManager.currentServer?.id == server.id
+        )
+        .onTapGesture {
+            onSelect?(server)
+            dismiss()
+        }
+        .contextMenu {
+            deleteButton(for: server)
+            editButton(for: server) 
+        }
+    }
+    
+    private func deleteButton(for server: ClashServer) -> some View {
+        Button(role: .destructive) {
+            appManager.deleteServer(server)
+        } label: {
+            Label("Delete", systemImage: "trash")
+        }
+    }
+    
+    private func editButton(for server: ClashServer) -> some View {
+        Button {
+            editingServer = server
+        } label: {
+            Label("Edit", systemImage: "pencil")
         }
     }
     func emptyView() -> some View {
@@ -111,6 +135,7 @@ struct ServerListView: View {
 
 struct ServerRowView: View {
     let server: ClashServer
+    let isSelected: Bool
     
     private var versionDisplay: String {
         guard let version = server.version else { return "" }
@@ -148,6 +173,13 @@ struct ServerRowView: View {
                     if server.isQuickLaunch {
                         Image(systemName: "bolt.circle.fill")
                             .foregroundColor(.yellow)
+                            .font(.subheadline)
+                    }
+                    
+                    if isSelected {
+                        Spacer()
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.blue)
                             .font(.subheadline)
                     }
                 }

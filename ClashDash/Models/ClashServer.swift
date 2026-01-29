@@ -41,6 +41,9 @@ struct ClashServer: Identifiable, Codable, Hashable {
     }
     
     var displayName: String {
+        if !name.isEmpty {
+            return name
+        }
         return "\(host):\(port)"
     }
     
@@ -52,6 +55,10 @@ struct ClashServer: Identifiable, Codable, Hashable {
     
     var proxyProvidersURL: URL? {
         baseURL?.appendingPathComponent("providers/proxies")
+    }
+    
+    var isValid: Bool {
+        host.isEmpty || port.isEmpty || secret.isEmpty
     }
     
     func makeRequest(url: URL?) throws -> URLRequest {
