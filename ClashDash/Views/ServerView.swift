@@ -5,44 +5,78 @@ struct ServerView: View {
     @StateObject private var networkMonitor = NetworkMonitor()
     @State private var selectedTab = 0
     
-    let server: ClashServer
+    @State var server: ClashServer
     
     var body: some View {
         TabView(selection: $selectedTab) {
             // 概览标签页
-            OverviewTab(server: server)
-                .tabItem {
-                    Label("Overview", systemImage: "chart.line.uptrend.xyaxis")
-                }
-                .tag(0)
-            
+            NavigationStack {
+                OverviewTab(server: server)
+                    .toolbar {
+                        ToolbarItem(placement: .navigation) {
+                            ServerPickerMenu()
+                        }
+                    }
+            }
+            .tabItem {
+                Label("Overview", systemImage: "chart.line.uptrend.xyaxis")
+            }
+            .tag(0)
             // 代理标签页
-            ProxyView(server: server)
-                .tabItem {
-                    Label("Proxies", systemImage: "globe")
-                }
-                .tag(1)
+            NavigationStack {
+                ProxiesTab(server: server)
+                    .toolbar {
+                        ToolbarItem(placement: .navigation) {
+                            ServerPickerMenu()
+                        }
+                    }
+            }
+            .tabItem {
+                Label("Proxies", systemImage: "globe")
+            }
+            .tag(1)
             
             // 规则标签页
-            RulesView(server: server)
-                .tabItem {
-                    Label("Rules", systemImage: "ruler")
-                }
-                .tag(2)
+            NavigationStack {
+                RulesTab(server: server)
+                    .toolbar {
+                        ToolbarItem(placement: .navigation) {
+                            ServerPickerMenu()
+                        }
+                    }
+            }
+            .tabItem {
+                Label("Rules", systemImage: "ruler")
+            }
+            .tag(2)
             
             // 连接标签页
-            ConnectionsView(server: server)
-                .tabItem {
-                    Label("Connections", systemImage: "link")
-                }
-                .tag(3)
+            NavigationStack {
+                ConnectionsView(server: server)
+                    .toolbar {
+                        ToolbarItem(placement: .navigation) {
+                            ServerPickerMenu()
+                        }
+                    }
+            }
+            .tabItem {
+                Label("Connections", systemImage: "link")
+            }
+            .tag(3)
             
             // 更多标签页
-            ConfigView(server: server)
-                .tabItem {
-                    Label("More", systemImage: "ellipsis")
-                }
-                .tag(4)
+            NavigationStack {
+                SettingsView(server: server)
+                    .toolbar {
+                        ToolbarItem(placement: .navigation) {
+                            ServerPickerMenu()
+                        }
+                    }
+            }
+            .tabItem {
+                Label("More", systemImage: "ellipsis")
+            }
+            .tag(4)
         }
         .navigationTitle(server.displayName)
         .navigationBarTitleDisplayMode(.inline)
@@ -51,6 +85,28 @@ struct ServerView: View {
         }
         .onDisappear {
             networkMonitor.stopMonitoring()
+        }
+        
+    }
+}
+
+// 服务器选择器（Menu 或 Sheet 方式）
+struct ServerPickerMenu: View {
+    @State private var showSheet = false
+    
+    var body: some View {
+        Button {
+            showSheet = true
+        } label: {
+            HStack {
+                Image(systemName: "server.rack")
+                Text("server 1")
+                    .lineLimit(1)
+            }
+        }
+        .sheet(isPresented: $showSheet) {
+            ServerListView()
+                .presentationDetents([.medium, .large])
         }
     }
 }

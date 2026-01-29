@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ClashServer: Identifiable, Codable {
+struct ClashServer: Identifiable, Codable, Hashable {
     let id: UUID
     var name: String
     var host: String

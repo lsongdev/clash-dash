@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct MainView: View {
+struct ServerListView: View {
     @StateObject private var viewModel = ServerViewModel()
     @State private var showingSetting = false
     @State private var showingAddSheet = false
@@ -17,60 +17,37 @@ struct MainView: View {
             }
             // 服务器卡片列表
             List(viewModel.servers) { server in
-                NavigationLink(destination: ServerView(server: server)) {
-                    ServerRowView(server: server)
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                viewModel.deleteServer(server)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                            
-                            Button {
-                                editingServer = server
-                            } label: {
-                                Label("Edit", systemImage: "pencil")
-                            }
-                            
-                            Button {
-                                viewModel.setQuickLaunch(server)
-                            } label: {
-                                Label(server.isQuickLaunch ? "取消快速启动" : "设为快速启动",
-                                      systemImage: server.isQuickLaunch ? "bolt.slash.circle" : "bolt.circle")
-                            }
+                ServerRowView(server: server)
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            viewModel.deleteServer(server)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
-                }
-                .buttonStyle(PlainButtonStyle())
+                        
+                        Button {
+                            editingServer = server
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                        
+                        Button {
+                            viewModel.setQuickLaunch(server)
+                        } label: {
+                            Label(server.isQuickLaunch ? "取消快速启动" : "设为快速启动",
+                                  systemImage: server.isQuickLaunch ? "bolt.slash.circle" : "bolt.circle")
+                        }
+                    }
             }
-            .navigationTitle("Clash Dash")
+            .navigationTitle("Servers")
+            .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(isPresented: $showQuickLaunchDestination) {
                 if let server = selectedQuickLaunchServer ?? viewModel.servers.first {
                     ServerView(server: server)
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button(action: {
-                        showingAddSheet = true
-                    }) {
-                        Image(systemName: "plus")
-                    }
-                }
-                
-                ToolbarItem(placement: .primaryAction) {
-                    Button(action: { showingSetting = true }) {
-                        Image(systemName: "gear")
-                    }
-                    
-                }
-                
-            }
             .sheet(isPresented: $showingAddSheet) {
                 AddServerView(viewModel: viewModel)
-            }
-            .sheet(isPresented: $showingSetting) {
-                SettingsView(viewModel: viewModel)
-                    .presentationDetents([.medium, .large])
             }
             .sheet(item: $editingServer) { server in
                 EditServerView(viewModel: viewModel, server: server)
@@ -183,9 +160,9 @@ struct ServerRowView: View {
                 }
             }
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(16)
+        // .padding()
+        // .background(Color(.secondarySystemGroupedBackground))
+        // .cornerRadius(16)
     }
 }
 

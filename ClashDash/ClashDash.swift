@@ -22,8 +22,8 @@ struct ClashDashApp: App {
     
     var body: some Scene {
         WindowGroup {
-            // MainView()
-            ServerView(server: ClashServer(host: "192.168.2.1", port: "7880", secret: "clash@lsong.org"))
+            // ServerListView()
+             ServerView(server: ClashServer(host: "192.168.2.1", port: "7880", secret: "clash@lsong.org"))
                 .environmentObject(networkMonitor)
             
                 

@@ -16,7 +16,7 @@ extension View {
     }
 }
 
-struct ProxyView: View {
+struct ProxiesTab: View {
     @StateObject private var viewModel: ProxyViewModel
     @State private var selectedGroupId: String?
     @State private var isRefreshing = false
@@ -34,67 +34,64 @@ struct ProxyView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // 代理组概览卡片
-                    ProxyGroupsOverview(
-                        groups: viewModel.getSortedGroups(),
-                        viewModel: viewModel
-                    )
-                    
-                    // 代理提供者部分
-                    ProxyProvidersSection(
-                        providers: viewModel.providers,
-                        nodes: viewModel.providerNodes,
-                        viewModel: viewModel
-                    )
-                }
-                .padding()
-            }
-            .refreshable {
-                await refreshData()
-            }
-            .task {
-                await viewModel.fetchProxies()
-            }
-            .navigationTitle("Proxies")
-            // .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 12) {
-                        Button {
-                            // 添加触觉反馈
-                            impactFeedback.impactOccurred()
-                            showProviderSheet = true
-                        } label: {
-                            Label("添加", systemImage: "square.stack.3d.up")
-                        }
-                        
-                        Button {
-                            // 添加触觉反馈
-                            impactFeedback.impactOccurred()
-                            Task { await refreshData() }
-                        } label: {
-                            Label("刷新", systemImage: "arrow.clockwise")
-                                .rotationEffect(.degrees(isRefreshing ? 360 : 0))
-                                .animation(isRefreshing ? .linear(duration: 1).repeatForever(autoreverses: false) : .default,
-                                         value: isRefreshing)
-                        }
-                        .disabled(isRefreshing)
-                    }
-                }
-            }
-            .sheet(isPresented: $showProviderSheet) {
-                ProvidersSheetView(
+        ScrollView {
+            VStack(spacing: 20) {
+                // 代理组概览卡片
+                ProxyGroupsOverview(
+                    groups: viewModel.getSortedGroups(),
+                    viewModel: viewModel
+                )
+                
+                // 代理提供者部分
+                ProxyProvidersSection(
                     providers: viewModel.providers,
                     nodes: viewModel.providerNodes,
                     viewModel: viewModel
                 )
-                .presentationDetents([.medium, .large])
+            }
+            .padding()
+        }
+        .refreshable {
+            await refreshData()
+        }
+        .task {
+            await viewModel.fetchProxies()
+        }
+        .navigationTitle("Proxies")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: 12) {
+                    Button {
+                        // 添加触觉反馈
+                        impactFeedback.impactOccurred()
+                        showProviderSheet = true
+                    } label: {
+                        Label("添加", systemImage: "square.stack.3d.up")
+                    }
+                    
+                    Button {
+                        // 添加触觉反馈
+                        impactFeedback.impactOccurred()
+                        Task { await refreshData() }
+                    } label: {
+                        Label("刷新", systemImage: "arrow.clockwise")
+                            .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                            .animation(isRefreshing ? .linear(duration: 1).repeatForever(autoreverses: false) : .default,
+                                     value: isRefreshing)
+                    }
+                    .disabled(isRefreshing)
+                }
             }
         }
-        
+        .sheet(isPresented: $showProviderSheet) {
+            ProvidersSheetView(
+                providers: viewModel.providers,
+                nodes: viewModel.providerNodes,
+                viewModel: viewModel
+            )
+            .presentationDetents([.medium, .large])
+        }
     }
     
     private func refreshData() async {

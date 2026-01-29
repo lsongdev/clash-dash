@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct RulesView: View {
+struct RulesTab: View {
     @StateObject private var viewModel: RulesViewModel
     
     let server: ClashServer
@@ -11,19 +11,15 @@ struct RulesView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            List(viewModel.rules) { rule in
-                ruleRowView(rule: rule)
-            }
-            
-            .refreshable {
-                await viewModel.fetchData()
-            }
-            .navigationTitle("Rules")
-            // .navigationBarTitleDisplayMode(.inline)
+        List(viewModel.rules) { rule in
+            ruleRowView(rule: rule)
         }
         
-        
+        .refreshable {
+            await viewModel.fetchData()
+        }
+        .navigationTitle("Rules")
+        .navigationBarTitleDisplayMode(.inline)
     }
     func ruleRowView(rule: RulesViewModel.Rule) -> some View{
         HStack(alignment: .center) {

@@ -9,115 +9,115 @@ import Charts
 import SwiftUI
 
 struct OverviewTab: View {
-    let server: ClashServer
+    @ObservedObject var appManager = AppManager.shared
     @StateObject private var monitor = NetworkMonitor()
     
+    let server: ClashServer
+    
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    Color.clear
-                        .frame(height: 8)
-                    // 速度卡片
-                    HStack(spacing: 16) {
-                        StatusCard(
-                            title: "Download",
-                            value: monitor.downloadSpeed,
-                            icon: "arrow.down.circle",
-                            color: .blue
+        ScrollView {
+            VStack(spacing: 16) {
+                Color.clear
+                    .frame(height: 8)
+                // 速度卡片
+                HStack(spacing: 16) {
+                    StatusCard(
+                        title: "Download",
+                        value: monitor.downloadSpeed,
+                        icon: "arrow.down.circle",
+                        color: .blue
+                    )
+                    StatusCard(
+                        title: "Upload",
+                        value: monitor.uploadSpeed,
+                        icon: "arrow.up.circle",
+                        color: .green
+                    )
+                }
+                
+                // 总流量卡片
+                HStack(spacing: 16) {
+                    StatusCard(
+                        title: "下载总量",
+                        value: monitor.totalDownload,
+                        icon: "arrow.down.circle.fill",
+                        color: .blue
+                    )
+                    StatusCard(
+                        title: "上传总量",
+                        value: monitor.totalUpload,
+                        icon: "arrow.up.circle.fill",
+                        color: .green
+                    )
+                }
+                
+                // 状态卡片
+                HStack(spacing: 16) {
+                    StatusCard(
+                        title: "活动连接",
+                        value: "\(monitor.activeConnections)",
+                        icon: "link.circle.fill",
+                        color: .orange
+                    )
+                    StatusCard(
+                        title: "内存使用",
+                        value: monitor.memoryUsage,
+                        icon: "memorychip",
+                        color: .purple
+                    )
+                }
+                
+                // 速率图表
+                SpeedChartView(speedHistory: monitor.speedHistory)
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                
+                ChartCard(title: "Memory Usage", icon: "memorychip") {
+                    Chart(monitor.memoryHistory) { record in
+                        AreaMark(
+                            x: .value("Time", record.timestamp),
+                            y: .value("Memory", record.usage)
                         )
-                        StatusCard(
-                            title: "Upload",
-                            value: monitor.uploadSpeed,
-                            icon: "arrow.up.circle",
-                            color: .green
+                        .foregroundStyle(.purple.opacity(0.3))
+                        
+                        LineMark(
+                            x: .value("Time", record.timestamp),
+                            y: .value("Memory", record.usage)
                         )
+                        .foregroundStyle(.purple)
                     }
-                    
-                    // 总流量卡片
-                    HStack(spacing: 16) {
-                        StatusCard(
-                            title: "下载总量",
-                            value: monitor.totalDownload,
-                            icon: "arrow.down.circle.fill",
-                            color: .blue
-                        )
-                        StatusCard(
-                            title: "上传总量",
-                            value: monitor.totalUpload,
-                            icon: "arrow.up.circle.fill",
-                            color: .green
-                        )
-                    }
-                    
-                    // 状态卡片
-                    HStack(spacing: 16) {
-                        StatusCard(
-                            title: "活动连接",
-                            value: "\(monitor.activeConnections)",
-                            icon: "link.circle.fill",
-                            color: .orange
-                        )
-                        StatusCard(
-                            title: "内存使用",
-                            value: monitor.memoryUsage,
-                            icon: "memorychip",
-                            color: .purple
-                        )
-                    }
-                    
-                    // 速率图表
-                    SpeedChartView(speedHistory: monitor.speedHistory)
-                        .padding()
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-                    
-                    // 只在 Meta 服务器上显示内存图表
-                    if server.serverType == .meta {
-                        ChartCard(title: "Memory Usage", icon: "memorychip") {
-                            Chart(monitor.memoryHistory) { record in
-                                AreaMark(
-                                    x: .value("Time", record.timestamp),
-                                    y: .value("Memory", record.usage)
-                                )
-                                .foregroundStyle(.purple.opacity(0.3))
-                                
-                                LineMark(
-                                    x: .value("Time", record.timestamp),
-                                    y: .value("Memory", record.usage)
-                                )
-                                .foregroundStyle(.purple)
-                            }
-                            .frame(height: 200)
-                            .chartYAxis {
-                                AxisMarks(position: .leading) { value in
-                                    if let memory = value.as(Double.self) {
-                                        AxisGridLine()
-                                        AxisValueLabel {
-                                            Text("\(Int(memory)) MB")
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                        }
-                                    }
+                    .frame(height: 200)
+                    .chartYAxis {
+                        AxisMarks(position: .leading) { value in
+                            if let memory = value.as(Double.self) {
+                                AxisGridLine()
+                                AxisValueLabel {
+                                    Text("\(Int(memory)) MB")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
-                            }
-                            .chartXAxis {
-                                AxisMarks(values: .automatic(desiredCount: 3))
                             }
                         }
                     }
+                    .chartXAxis {
+                        AxisMarks(values: .automatic(desiredCount: 3))
+                    }
                 }
-                .padding(.horizontal)
-                .padding(.bottom)
             }
-            .background(Color(.systemGroupedBackground))
-            .onAppear { monitor.startMonitoring(server: server) }
-            .onDisappear { monitor.stopMonitoring() }
-            .navigationTitle("Overview")
-            // .navigationBarTitleDisplayMode(.inline)
+            .padding(.horizontal)
+            .padding(.bottom)
         }
+        .background(Color(.systemGroupedBackground))
+        .onAppear { monitor.startMonitoring(server: server) }
+        .onDisappear { monitor.stopMonitoring() }
+        // .navigationTitle(appManager.appName)
+        .navigationTitle("Overview")
+        .navigationBarTitleDisplayMode(.inline)
+        
     }
+        
 }
 
 
