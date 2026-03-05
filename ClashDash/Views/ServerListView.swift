@@ -153,19 +153,17 @@ struct ServerRowView: View {
                         .fill(server.status.color)
                         .frame(width: 20, height: 20)
                 }
-                
-                
             }
             
             // 服务器信息
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .center, spacing: 6) {
                 HStack {
                     Text(server.displayName)
                         .font(.headline)
                         .lineLimit(1)
                 }
                 
-               if let errorMessage = server.errorMessage {
+                if let errorMessage = server.errorMessage, !errorMessage.isEmpty {
                     Text(errorMessage)
                         .font(.caption)
                         .foregroundColor(server.status.color)

@@ -30,6 +30,7 @@ struct Rule: Codable, Identifiable, Hashable {
 }
 
 struct RuleProvider: Codable, Identifiable {
+    var id: String { name }
     var name: String
     let behavior: String
     let type: String
@@ -37,24 +38,6 @@ struct RuleProvider: Codable, Identifiable {
     let updatedAt: String
     let format: String?  // 改为可选类型
     let vehicleType: String
-    
-    var id: String { name }
-    
-    enum CodingKeys: String, CodingKey {
-        case behavior, type, ruleCount, updatedAt, format, vehicleType
-        case name
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.name = ""
-        self.behavior = try container.decode(String.self, forKey: .behavior)
-        self.type = try container.decode(String.self, forKey: .type)
-        self.ruleCount = try container.decode(Int.self, forKey: .ruleCount)
-        self.updatedAt = try container.decode(String.self, forKey: .updatedAt)
-        self.format = try container.decodeIfPresent(String.self, forKey: .format)  // 使用 decodeIfPresent
-        self.vehicleType = try container.decode(String.self, forKey: .vehicleType)
-    }
     
     var formattedUpdateTime: String {
         let formatter = DateFormatter()
@@ -147,10 +130,11 @@ struct VersionResponse: Codable {
 // MARK: - Clash API
 class ClashAPI: NSObject, URLSessionDelegate, URLSessionTaskDelegate {
     
-    func getVersion(_ server: ClashServer) async throws {
+    func getVersion(_ server: ClashServer) async throws -> String {
         let request = server.makeRequest(path: "/version")
-        let (data, res) = try await URLSession.shared.data(for: request)
-        print(data)
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let res = try JSONDecoder().decode(VersionResponse.self, from: data)
+        return res.version
     }
     
     func fetchRules(server: ClashServer) async throws -> [Rule] {
@@ -165,6 +149,7 @@ class ClashAPI: NSObject, URLSessionDelegate, URLSessionTaskDelegate {
         let (data, _) = try await URLSession.shared.data(for: request)
         let res = try JSONDecoder().decode(RuleProvidersResponse.self, from: data)
         let providers = res.providers.map { name, provider in
+            
             return provider
         }
         return providers

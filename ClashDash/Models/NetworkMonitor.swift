@@ -31,13 +31,18 @@ class NetworkMonitor: ObservableObject {
         self.server = server
         self.activeView = viewId
         isViewActive = true
-        
+
         if !isMonitoring {
             isMonitoring = true
             connectToTraffic(server: server)
             connectToConnections(server: server)
             connectToMemory(server: server)
         }
+    }
+
+    func restartMonitoring(server: ClashServer) {
+        stopMonitoring()
+        startMonitoring(server: server, viewId: activeView)
     }
     
     func pauseMonitoring() {

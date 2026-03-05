@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ClashServer: Identifiable, Codable, Hashable {
-    let id: UUID = UUID()
+    var id: UUID = UUID()
     var name: String = ""
     var host: String = ""
     var port: String = ""

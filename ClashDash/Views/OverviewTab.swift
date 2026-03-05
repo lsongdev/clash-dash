@@ -11,6 +11,7 @@ import SwiftUI
 struct OverviewTab: View {
     @ObservedObject var appManager = AppManager.shared
     @StateObject private var monitor = NetworkMonitor()
+    var server: ClashServer = AppManager.shared.currentServer
     
     var body: some View {
         ScrollView {
@@ -110,12 +111,14 @@ struct OverviewTab: View {
         .background(Color(.systemGroupedBackground))
         .onAppear { monitor.startMonitoring(server: AppManager.shared.currentServer) }
         .onDisappear { monitor.stopMonitoring() }
+        .onChange(of: AppManager.shared.currentServer) { oldServer, newServer in
+            monitor.restartMonitoring(server: newServer)
+        }
         // .navigationTitle(appManager.appName)
-        .navigationTitle("Overview")
-        .navigationBarTitleDisplayMode(.inline)
-        
+//        .navigationTitle("Overview")
+//        .navigationBarTitleDisplayMode(.inline)
+
     }
-        
 }
 
 

@@ -18,7 +18,7 @@ struct RulesTab: View {
             }
             
             Section("Providers") {
-                ForEach(providers) { provider in
+                ForEach(providers) { provider in 
                     HStack {
                         Text(provider.name)
                         Spacer()
@@ -28,6 +28,7 @@ struct RulesTab: View {
             }
             
         }
+        .buttonStyle(PlainButtonStyle())
         .task {
             loadData()
         }

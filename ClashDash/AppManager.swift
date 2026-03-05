@@ -40,6 +40,10 @@ class AppManager: ObservableObject {
     init() {
         loadServers()
         loadCurrentServer()
+        // 初始化时检查当前服务器状态
+        Task {
+            await checkServerStatus(currentServer)
+        }
     }
     
     // MARK: - Server Loading & Saving
@@ -83,30 +87,41 @@ class AppManager: ObservableObject {
             await checkServerStatus(server)
         }
     }
-    
-    private func checkServerStatus(_ server: ClashServer) async {
+
+    @MainActor
+    func checkServerStatus(_ server: ClashServer) async {
         do {
             let version = try await api.getVersion(server)
-            print(version)
+            // 更新服务器状态为 ok
+            if let index = servers.firstIndex(where: { $0.id == server.id }) {
+                servers[index].status = .ok
+                servers[index].version = version
+                saveServers()
+            }
+            // 如果是当前选中的服务器，也更新 currentServer
+            if currentServer.id == server.id {
+                var updatedServer = currentServer
+                updatedServer.status = .ok
+                updatedServer.version = version
+                currentServer = updatedServer
+            }
         } catch {
-            print(error)
+            // 更新服务器状态为 error
+            if let index = servers.firstIndex(where: { $0.id == server.id }) {
+                servers[index].status = .error
+                servers[index].errorMessage = error.localizedDescription
+                saveServers()
+            }
+            // 如果是当前选中的服务器，也更新 currentServer
+            if currentServer.id == server.id {
+                var updatedServer = currentServer
+                updatedServer.status = .error
+                updatedServer.errorMessage = error.localizedDescription
+                currentServer = updatedServer
+            }
         }
-        
-//        if let index = servers.firstIndex(where: { $0.id == server.id }) {
-//            var updatedServer = server
-//            updatedServer.status = status
-//            if let version = version {
-//                updatedServer.version = version
-//            }
-//            if let serverType = serverType {
-//                updatedServer.serverType = serverType
-//            }
-//            updatedServer.errorMessage = errorMessage
-//            servers[index] = updatedServer
-//            saveServers()
-//        }
     }
-    
+
     func showAlert(title: String, message: String) {
         alertTitle = title
         alertMessage = message
@@ -125,6 +140,10 @@ class AppManager: ObservableObject {
         currentServer = server
         if let encoded = try? JSONEncoder().encode(server) {
             UserDefaults.standard.set(encoded, forKey: Self.currentServerKey)
+        }
+        // 切换服务器后检查状态并刷新页面
+        Task {
+            await checkServerStatus(server)
         }
     }
     

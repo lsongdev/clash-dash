@@ -12,8 +12,11 @@ struct MainView: View {
             NavigationStack {
                 OverviewTab()
                     .toolbar {
-                        ToolbarItem(placement: .navigation) {
-                            ServerPickerMenu()
+                        ToolbarItem(placement: .principal) {
+                            VStack(spacing: 2) {
+                                Text("Overview").font(.headline)
+                                ServerPickerView()
+                            }
                         }
                     }
             }
@@ -25,8 +28,11 @@ struct MainView: View {
             NavigationStack {
                 ProxiesTab()
                     .toolbar {
-                        ToolbarItem(placement: .navigation) {
-                            ServerPickerMenu()
+                        ToolbarItem(placement: .principal) {
+                            VStack(spacing: 2) {
+                                Text("Proxies").font(.headline)
+                                ServerPickerView()
+                            }
                         }
                     }
             }
@@ -34,13 +40,16 @@ struct MainView: View {
                 Label("Proxies", systemImage: "globe")
             }
             .tag(1)
-            
+
             // 规则标签页
             NavigationStack {
                 RulesTab()
                     .toolbar {
-                        ToolbarItem(placement: .navigation) {
-                            ServerPickerMenu()
+                        ToolbarItem(placement: .principal) {
+                            VStack(spacing: 2) {
+                                Text("Rules").font(.headline)
+                                ServerPickerView()
+                            }
                         }
                     }
             }
@@ -48,13 +57,16 @@ struct MainView: View {
                 Label("Rules", systemImage: "ruler")
             }
             .tag(2)
-            
+
             // 连接标签页
             NavigationStack {
                 ConnectionsTab()
                     .toolbar {
-                        ToolbarItem(placement: .navigation) {
-                            ServerPickerMenu()
+                        ToolbarItem(placement: .principal) {
+                            VStack(spacing: 2) {
+                                Text("Connections").font(.headline)
+                                ServerPickerView()
+                            }
                         }
                     }
             }
@@ -62,13 +74,16 @@ struct MainView: View {
                 Label("Connections", systemImage: "link")
             }
             .tag(3)
-            
+
             // 更多标签页
             NavigationStack {
                 SettingsView()
                     .toolbar {
-                        ToolbarItem(placement: .navigation) {
-                            ServerPickerMenu()
+                        ToolbarItem(placement: .principal) {
+                            VStack(spacing: 2) {
+                                Text("Settings").font(.headline)
+                                ServerPickerView()
+                            }
                         }
                     }
             }
@@ -79,42 +94,30 @@ struct MainView: View {
         }
         .navigationTitle(appManager.appName)
         .navigationBarTitleDisplayMode(.inline)
+//        .toolbar {
+//
+//            ToolbarItem(placement: .topBarLeading) {
+//                Button {
+//                    
+//                } label: {
+//                    Image(systemName: "chevron.left")
+//                }
+//            }
+//
+//            ToolbarItem(placement: .principal) {
+//                Text("aaa")
+//            }
+//        }
         .onAppear {
             networkMonitor.startMonitoring(server: appManager.currentServer)
         }
         .onDisappear {
             networkMonitor.stopMonitoring()
         }
-        
-    }
-}
+        .onChange(of: appManager.currentServer) { oldServer, newServer in
+            networkMonitor.restartMonitoring(server: newServer)
+        }
 
-// 服务器选择器（Menu 或 Sheet 方式）
-struct ServerPickerMenu: View {
-    @State private var showServerList = false
-    @ObservedObject var appManager = AppManager.shared
-    
-    var body: some View {
-        Button {
-            showServerList = true
-        } label: {
-            HStack(spacing: 8) {
-                // 状态指示器绿点
-                Circle()
-                    .fill(appManager.currentServer.status.color)
-                    .frame(width: 8, height: 8)
-                Text(appManager.currentServer.displayName)
-                    .lineLimit(1)
-                    .font(.subheadline)
-            }
-            .frame(minWidth: 50, maxWidth: 110)
-        }
-        .sheet(isPresented: $showServerList) {
-            ServerListView { selectedServer in
-                appManager.selectServer(selectedServer)
-            }
-            .presentationDetents([.medium, .large])
-        }
     }
 }
 
@@ -196,25 +199,3 @@ struct ChartCard<Content: View>: View {
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
 }
-
-// 辅助视图组件
-struct ProxyGroupRow: View {
-    @State private var selectedProxy = "Auto"
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("代理组名称")
-                .font(.headline)
-            
-            Picker("选择理", selection: $selectedProxy) {
-                Text("Auto").tag("Auto")
-                Text("香港 01").tag("HK01")
-                Text("新加坡 01").tag("SG01")
-                Text("日本 01").tag("JP01")
-            }
-            .pickerStyle(.menu)
-        }
-        .padding(.vertical, 4)
-    }
-}
- 

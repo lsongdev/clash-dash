@@ -469,7 +469,7 @@ struct ConnectionsTab: View {
     }
     
     var body: some View {
-        NavigationStack {
+        VStack {
             
             filterBar
             
@@ -496,12 +496,12 @@ struct ConnectionsTab: View {
             
 //            ZStack(alignment: .bottomTrailing) {
 //                VStack(spacing: 0) {
-//                    
+//
 //                    // 过滤标签栏
 //                    filterBar
-//                    
-//                    
-//                    
+//
+//
+//
 //                    // 搜索栏 - 有条件地显示
 //                    if showSearch {
 //                        SearchBar(text: $searchText, placeholder: "搜索 IP、端口、主机名、设备标签")
@@ -509,19 +509,19 @@ struct ConnectionsTab: View {
 //                            .padding(.vertical, 8)
 //                            .transition(.move(edge: .top).combined(with: .opacity))
 //                    }
-//                    
+//
 //                    trafficView
-//                    
+//
 ////                    ScrollView {
 ////                        LazyVStack {
-////                            
+////
 ////                        }
 ////                    }
-//                    
+//
 //                    if viewModel.connections.isEmpty {
 //                        EmptyStateView()
 //                    }
-//                    
+//
 //                }
 //                menuButtons
 //                    .padding()
