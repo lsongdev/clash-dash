@@ -16,24 +16,35 @@ struct ServerPickerView: View {
         Button {
             showServerList = true
         } label: {
-            HStack(alignment: .center, spacing: 6) {
-                Circle()
-                    .fill(server.status.color)
-                    .frame(width: 8, height: 8)
-                Text(server.displayName)
-                    .font(.system(size: 12, weight: .regular))
+            HStack(spacing: 6) {
+                if appManager.isChecking(server) {
+                    ProgressView()
+                        .controlSize(.mini)
+                } else {
+                    Circle()
+                        .fill(server.status.color)
+                        .frame(width: 8, height: 8)
+                }
+                Text(appManager.servers.isEmpty ? "选择服务器" : server.displayName)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .lineLimit(1)
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .medium))
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
             }
+            .padding(.horizontal, 9)
+            .padding(.vertical, 4)
+            .background(.quaternary, in: Capsule())
             .contentShape(Rectangle())
         }
-        .padding(0)
         .buttonStyle(.plain)
+        .accessibilityLabel(appManager.servers.isEmpty ? "选择服务器" : "当前服务器，\(server.displayName)")
+        .accessibilityValue(appManager.isChecking(server) ? "检测中" : server.status.text)
         .sheet(isPresented: $showServerList) {
-            ServerListView { selectedServer in
-                appManager.selectServer(selectedServer)
-            }
+            ServerListView()
             .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
     }
 }

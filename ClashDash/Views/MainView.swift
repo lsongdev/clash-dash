@@ -2,7 +2,6 @@ import SwiftUI
 
 struct MainView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var networkMonitor = NetworkMonitor()
     @ObservedObject var appManager = AppManager.shared
     @State private var selectedTab = 0
      
@@ -108,16 +107,6 @@ struct MainView: View {
 //                Text("aaa")
 //            }
 //        }
-        .onAppear {
-            networkMonitor.startMonitoring(server: appManager.currentServer)
-        }
-        .onDisappear {
-            networkMonitor.stopMonitoring()
-        }
-        .onChange(of: appManager.currentServer) { oldServer, newServer in
-            networkMonitor.restartMonitoring(server: newServer)
-        }
-
     }
 }
 

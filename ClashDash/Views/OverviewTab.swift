@@ -11,13 +11,10 @@ import SwiftUI
 struct OverviewTab: View {
     @ObservedObject var appManager = AppManager.shared
     @StateObject private var monitor = NetworkMonitor()
-    var server: ClashServer = AppManager.shared.currentServer
     
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                Color.clear
-                    .frame(height: 8)
                 // 速度卡片
                 HStack(spacing: 16) {
                     StatusCard(
@@ -109,10 +106,10 @@ struct OverviewTab: View {
             .padding(.bottom)
         }
         .background(Color(.systemGroupedBackground))
-        .onAppear { monitor.startMonitoring(server: AppManager.shared.currentServer) }
+        .onAppear { monitor.startMonitoring(server: appManager.currentServer) }
         .onDisappear { monitor.stopMonitoring() }
-        .onChange(of: AppManager.shared.currentServer) { oldServer, newServer in
-            monitor.restartMonitoring(server: newServer)
+        .onChange(of: appManager.currentServer.connectionIdentifier) { _, _ in
+            monitor.restartMonitoring(server: appManager.currentServer)
         }
         // .navigationTitle(appManager.appName)
 //        .navigationTitle("Overview")

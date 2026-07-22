@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct SettingsView: View {
-    
+    @ObservedObject private var appManager = AppManager.shared
     @StateObject private var viewModel = SettingsViewModel()
     @State private var showingUpgradeAlert = false
     @State private var showingRestartAlert = false
     @State private var showingServerPicker = false
     
-    let server: ClashServer = AppManager.shared.currentServer
+    private var server: ClashServer { appManager.currentServer }
     
     var body: some View {
         List {  
@@ -241,7 +241,7 @@ struct SettingsView: View {
         
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
+        .task(id: server.connectionIdentifier) {
             viewModel.fetchConfig(server: server)
         }
     }

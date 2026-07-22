@@ -4,7 +4,7 @@ struct RulesTab: View {
     @ObservedObject var appManager = AppManager.shared
     // @StateObject private var viewModel: RulesViewModel
     
-    let server: ClashServer = AppManager.shared.currentServer
+    private var server: ClashServer { appManager.currentServer }
     
     @State var rules: [Rule] = []
     @State var providers: [RuleProvider] = []
@@ -29,11 +29,11 @@ struct RulesTab: View {
             
         }
         .buttonStyle(PlainButtonStyle())
-        .task {
-            loadData()
+        .task(id: server.connectionIdentifier) {
+            await loadData()
         }
         .refreshable {
-            loadData()
+            await loadData()
         }
         .navigationTitle("Rules")
         .navigationBarTitleDisplayMode(.inline)
@@ -53,10 +53,27 @@ struct RulesTab: View {
             Text(rule.proxy)
         }
     }
-    func loadData() {
-        Task {
-            rules = try await appManager.api.fetchRules(server: server)
-            providers = try await appManager.api.fetchRuleProviders(server: server)
+    func loadData() async {
+        let requestedServer = server
+        guard requestedServer.isValid else {
+            rules = []
+            providers = []
+            return
+        }
+        do {
+            async let fetchedRules = appManager.api.fetchRules(server: requestedServer)
+            async let fetchedProviders = appManager.api.fetchRuleProviders(server: requestedServer)
+            let (newRules, newProviders) = try await (fetchedRules, fetchedProviders)
+            guard appManager.currentServer.connectionIdentifier == requestedServer.connectionIdentifier else { return }
+            rules = newRules
+            providers = newProviders
+        } catch is CancellationError {
+            // 切换服务器时忽略旧请求结果。
+        } catch {
+            guard appManager.currentServer.connectionIdentifier == requestedServer.connectionIdentifier else { return }
+            rules = []
+            providers = []
+            print(error)
         }
     }
 }

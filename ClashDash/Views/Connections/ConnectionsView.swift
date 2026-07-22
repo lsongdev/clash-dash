@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ConnectionsTab: View {
-    
+    @ObservedObject private var appManager = AppManager.shared
     @StateObject private var viewModel = ConnectionsViewModel()
     @StateObject private var tagViewModel = ClientTagViewModel()
     @State private var searchText = ""
@@ -11,7 +11,7 @@ struct ConnectionsTab: View {
     @State private var showClientTagSheet = false
     @State private var selectedConnection: ClashConnection?
     
-    let server: ClashServer = AppManager.shared.currentServer
+    private var server: ClashServer { appManager.currentServer }
     
     // 添加确认对话框的状态
     @State private var showCloseAllConfirmation = false
@@ -541,6 +541,10 @@ struct ConnectionsTab: View {
                 .presentationDetents([.large])
             }
             .onAppear {
+                viewModel.startMonitoring(server: server)
+            }
+            .onChange(of: server.connectionIdentifier) { _, _ in
+                viewModel.stopMonitoring()
                 viewModel.startMonitoring(server: server)
             }
             .onDisappear {

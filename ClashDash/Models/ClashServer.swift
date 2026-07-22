@@ -12,11 +12,22 @@ struct ClashServer: Identifiable, Codable, Hashable {
     var errorMessage: String? = ""
     
     var isValid: Bool {
-        host.isEmpty || port.isEmpty || secret.isEmpty
+        !host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && Int(port.trimmingCharacters(in: .whitespacesAndNewlines)).map { (1...65535).contains($0) } == true
     }
     
     var displayName: String {
         return name.isEmpty ? "\(host):\(port)" : name
+    }
+
+    var endpointDescription: String {
+        let scheme = useSSL ? "https" : "http"
+        return "\(scheme)://\(host):\(port)"
+    }
+
+    /// 仅在连接参数变化时改变，避免状态刷新触发页面重复重连。
+    var connectionIdentifier: String {
+        "\(id.uuidString)|\(host)|\(port)|\(useSSL)|\(secret)"
     }
     
     var url: URL {
@@ -78,10 +89,10 @@ enum ServerStatus: String, Codable {
     
     var text: String {
         switch self {
-        case .ok: return "200 OK"
-        case .unauthorized: return "401 Unauthorized"
-        case .error: return "Error"
-        case .unknown: return "Unknown"
+        case .ok: return "在线"
+        case .unauthorized: return "认证失败"
+        case .error: return "连接失败"
+        case .unknown: return "未检测"
         }
     }
-} 
+}

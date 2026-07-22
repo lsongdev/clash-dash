@@ -8,7 +8,8 @@ import Foundation
 import SwiftUI
 
 // MARK: - App Manager
-class AppManager: ObservableObject {
+@MainActor
+final class AppManager: ObservableObject {
     // MARK: - 单例
     static let shared = AppManager()
       
@@ -25,24 +26,26 @@ class AppManager: ObservableObject {
     @Published var alertMessage = ""
     
     // MARK: - Server Management
-    @Published var currentServer: ClashServer =  ClashServer(name: "demo", host: "192.168.2.1", port: "7880", secret: "clash@lsong.org")
+    @Published private(set) var currentServer = ClashServer()
     
     @Published var servers: [ClashServer] = []
     @Published var showError = false
     @Published var errorMessage: String?
     @Published var errorDetails: String?
+    @Published private(set) var checkingServerIDs: Set<UUID> = []
     
     private static let currentServerKey = "CurrentSelectedServer"
+    private static let currentServerIDKey = "CurrentSelectedServerID"
     private static let saveKey = "SavedClashServers"
+    private var statusCheckTokens: [UUID: UUID] = [:]
     
     let api = ClashAPI()
     
     init() {
         loadServers()
         loadCurrentServer()
-        // 初始化时检查当前服务器状态
         Task {
-            await checkServerStatus(currentServer)
+            await checkAllServersStatus()
         }
     }
     
@@ -62,62 +65,99 @@ class AppManager: ObservableObject {
     
     // MARK: - Server Management
     func addServer(_ server: ClashServer) {
-        servers.append(server)
+        var newServer = server
+        newServer.status = .unknown
+        newServer.version = nil
+        newServer.errorMessage = nil
+        servers.append(newServer)
         saveServers()
-        Task {
-            await checkServerStatus(server)
+        if servers.count == 1 {
+            selectServer(newServer)
+        } else {
+            Task {
+                await checkServerStatus(newServer)
+            }
         }
     }
     
     func updateServer(_ server: ClashServer) {
         if let index = servers.firstIndex(where: { $0.id == server.id }) {
-            servers[index] = server
+            var updatedServer = server
+            updatedServer.status = .unknown
+            updatedServer.version = nil
+            updatedServer.errorMessage = nil
+            servers[index] = updatedServer
             saveServers()
+            if currentServer.id == updatedServer.id {
+                setCurrentServer(updatedServer)
+            }
+            Task {
+                await checkServerStatus(updatedServer)
+            }
         }
     }
     
     func deleteServer(_ server: ClashServer) {
+        let deletedIndex = servers.firstIndex(where: { $0.id == server.id })
         servers.removeAll { $0.id == server.id }
+        checkingServerIDs.remove(server.id)
+        statusCheckTokens.removeValue(forKey: server.id)
         saveServers()
+
+        guard currentServer.id == server.id else { return }
+        if servers.isEmpty {
+            currentServer = ClashServer()
+            clearCurrentServerSelection()
+        } else {
+            let nextIndex = min(deletedIndex ?? 0, servers.count - 1)
+            setCurrentServer(servers[nextIndex])
+        }
     }
     
     // MARK: - Server Status Check
     func checkAllServersStatus() async {
-        for server in servers {
-            await checkServerStatus(server)
+        let snapshot = servers
+        await withTaskGroup(of: Void.self) { group in
+            for server in snapshot {
+                group.addTask { [weak self] in
+                    await self?.checkServerStatus(server)
+                }
+            }
         }
     }
 
-    @MainActor
     func checkServerStatus(_ server: ClashServer) async {
+        guard servers.contains(where: { $0.id == server.id }) else { return }
+        let checkToken = UUID()
+        statusCheckTokens[server.id] = checkToken
+        checkingServerIDs.insert(server.id)
+        defer {
+            if statusCheckTokens[server.id] == checkToken {
+                statusCheckTokens.removeValue(forKey: server.id)
+                checkingServerIDs.remove(server.id)
+            }
+        }
+
         do {
             let version = try await api.getVersion(server)
-            // 更新服务器状态为 ok
-            if let index = servers.firstIndex(where: { $0.id == server.id }) {
+            if let index = matchingServerIndex(for: server) {
                 servers[index].status = .ok
                 servers[index].version = version
+                servers[index].errorMessage = nil
                 saveServers()
-            }
-            // 如果是当前选中的服务器，也更新 currentServer
-            if currentServer.id == server.id {
-                var updatedServer = currentServer
-                updatedServer.status = .ok
-                updatedServer.version = version
-                currentServer = updatedServer
+                syncCurrentServerIfNeeded(servers[index])
             }
         } catch {
-            // 更新服务器状态为 error
-            if let index = servers.firstIndex(where: { $0.id == server.id }) {
-                servers[index].status = .error
+            if let index = matchingServerIndex(for: server) {
+                if case NetworkError.unauthorized = error {
+                    servers[index].status = .unauthorized
+                } else {
+                    servers[index].status = .error
+                }
+                servers[index].version = nil
                 servers[index].errorMessage = error.localizedDescription
                 saveServers()
-            }
-            // 如果是当前选中的服务器，也更新 currentServer
-            if currentServer.id == server.id {
-                var updatedServer = currentServer
-                updatedServer.status = .error
-                updatedServer.errorMessage = error.localizedDescription
-                currentServer = updatedServer
+                syncCurrentServerIfNeeded(servers[index])
             }
         }
     }
@@ -130,25 +170,71 @@ class AppManager: ObservableObject {
     
     // MARK: - Current Server Management
     private func loadCurrentServer() {
-        if let data = UserDefaults.standard.data(forKey: Self.currentServerKey),
-           let decoded = try? JSONDecoder().decode(ClashServer.self, from: data) {
-            currentServer = decoded
+        let defaults = UserDefaults.standard
+        if let idString = defaults.string(forKey: Self.currentServerIDKey),
+           let id = UUID(uuidString: idString),
+           let selectedServer = servers.first(where: { $0.id == id }) {
+            currentServer = selectedServer
+            return
         }
-    }
-    
-    func saveCurrentServer(_ server: ClashServer) {
-        currentServer = server
-        if let encoded = try? JSONEncoder().encode(server) {
-            UserDefaults.standard.set(encoded, forKey: Self.currentServerKey)
+
+        // 兼容旧版本保存的完整服务器对象。
+        if let data = defaults.data(forKey: Self.currentServerKey),
+           let decoded = try? JSONDecoder().decode(ClashServer.self, from: data),
+           let selectedServer = servers.first(where: { $0.id == decoded.id }) {
+            currentServer = selectedServer
+            persistCurrentServerSelection()
+            return
         }
-        // 切换服务器后检查状态并刷新页面
-        Task {
-            await checkServerStatus(server)
-        }
+
+        currentServer = servers.first ?? ClashServer()
+        if !servers.isEmpty { persistCurrentServerSelection() }
     }
     
     func selectServer(_ server: ClashServer) {
-        saveCurrentServer(server)
+        guard let selectedServer = servers.first(where: { $0.id == server.id }) else { return }
+        guard currentServer.id != selectedServer.id else { return }
+        setCurrentServer(selectedServer)
+        Task { await checkServerStatus(selectedServer) }
+    }
+
+    func isChecking(_ server: ClashServer) -> Bool {
+        checkingServerIDs.contains(server.id)
+    }
+
+    private func matchingServerIndex(for snapshot: ClashServer) -> Int? {
+        servers.firstIndex {
+            $0.id == snapshot.id
+                && $0.host == snapshot.host
+                && $0.port == snapshot.port
+                && $0.secret == snapshot.secret
+                && $0.useSSL == snapshot.useSSL
+        }
+    }
+
+    private func syncCurrentServerIfNeeded(_ server: ClashServer) {
+        if currentServer.id == server.id {
+            currentServer = server
+        }
+    }
+
+    private func setCurrentServer(_ server: ClashServer) {
+        currentServer = server
+        persistCurrentServerSelection()
+    }
+
+    private func persistCurrentServerSelection() {
+        let defaults = UserDefaults.standard
+        defaults.set(currentServer.id.uuidString, forKey: Self.currentServerIDKey)
+        if let encoded = try? JSONEncoder().encode(currentServer) {
+            defaults.set(encoded, forKey: Self.currentServerKey)
+        }
+    }
+
+    private func clearCurrentServerSelection() {
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: Self.currentServerIDKey)
+        defaults.removeObject(forKey: Self.currentServerKey)
     }
 }
 

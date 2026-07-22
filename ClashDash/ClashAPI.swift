@@ -127,12 +127,56 @@ struct VersionResponse: Codable {
     let version: String
 }
 
+private struct DelayResponse: Codable {
+    let delay: Int
+}
+
 // MARK: - Clash API
 class ClashAPI: NSObject, URLSessionDelegate, URLSessionTaskDelegate {
+
+    private func apiURL(
+        server: ClashServer,
+        pathSegments: [String],
+        queryItems: [URLQueryItem] = []
+    ) throws -> URL {
+        var allowedCharacters = CharacterSet.urlPathAllowed
+        allowedCharacters.remove(charactersIn: "/")
+        let path = pathSegments.map {
+            $0.addingPercentEncoding(withAllowedCharacters: allowedCharacters) ?? $0
+        }.joined(separator: "/")
+
+        guard var components = URLComponents(string: "\(server.url.absoluteString)/\(path)") else {
+            throw NetworkError.invalidURL
+        }
+        components.queryItems = queryItems.isEmpty ? nil : queryItems
+        guard let url = components.url else { throw NetworkError.invalidURL }
+        return url
+    }
+
+    private func validate(_ response: URLResponse) throws {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse(message: "The server returned an invalid response.")
+        }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            if httpResponse.statusCode == 401 {
+                throw NetworkError.unauthorized(message: "Authentication failed. Check the Secret.")
+            }
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+    }
     
     func getVersion(_ server: ClashServer) async throws -> String {
         let request = server.makeRequest(path: "/version")
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse(message: "服务器返回了无效响应")
+        }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            if httpResponse.statusCode == 401 {
+                throw NetworkError.unauthorized(message: "认证失败，请检查 Secret")
+            }
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
         let res = try JSONDecoder().decode(VersionResponse.self, from: data)
         return res.version
     }
@@ -171,6 +215,60 @@ class ClashAPI: NSObject, URLSessionDelegate, URLSessionTaskDelegate {
             guard proxy.isGroup else { return nil }
             return proxy
         }
+    }
+
+    func selectProxy(server: ClashServer, groupName: String, proxyName: String) async throws {
+        let url = try apiURL(server: server, pathSegments: ["proxies", groupName])
+        var request = server.makeRequest(path: "proxies", method: "PUT")
+        request.url = url
+        request.httpBody = try JSONEncoder().encode(["name": proxyName])
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try validate(response)
+    }
+
+    func testProxyGroupDelay(
+        server: ClashServer,
+        groupName: String,
+        testURL: String,
+        timeout: Int
+    ) async throws -> [String: Int] {
+        let url = try apiURL(
+            server: server,
+            pathSegments: ["group", groupName, "delay"],
+            queryItems: [
+                URLQueryItem(name: "url", value: testURL),
+                URLQueryItem(name: "timeout", value: String(timeout))
+            ]
+        )
+        var request = server.makeRequest(path: "group")
+        request.url = url
+        request.timeoutInterval = TimeInterval(timeout) / 1000 + 2
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validate(response)
+        return try JSONDecoder().decode([String: Int].self, from: data)
+    }
+
+    func testProxyDelay(
+        server: ClashServer,
+        proxyName: String,
+        testURL: String,
+        timeout: Int
+    ) async throws -> Int {
+        let url = try apiURL(
+            server: server,
+            pathSegments: ["proxies", proxyName, "delay"],
+            queryItems: [
+                URLQueryItem(name: "url", value: testURL),
+                URLQueryItem(name: "timeout", value: String(timeout))
+            ]
+        )
+        var request = server.makeRequest(path: "proxies")
+        request.url = url
+        request.timeoutInterval = TimeInterval(timeout) / 1000 + 2
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validate(response)
+        return try JSONDecoder().decode(DelayResponse.self, from: data).delay
     }
     
     func fetchProxyProviders(server: ClashServer) async throws -> [ProxyProvider] {

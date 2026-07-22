@@ -10,29 +10,55 @@ struct ServerListView: View {
     
     var body: some View {
         NavigationStack {
-            
             if appManager.servers.isEmpty {
                 emptyView()
-            }
-            
-            List(appManager.servers) { server in
-                ServerRowView(
-                    server: server,
-                    isSelected: appManager.currentServer.id == server.id
-                )
-                .onTapGesture {
-                    onSelect?(server)
-                    dismiss()
+                    .navigationTitle("Servers")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar { ToolbarItem(placement: .topBarTrailing) { addButton } }
+            } else {
+                List(appManager.servers) { server in
+                    Button {
+                        onSelect?(server)
+                        appManager.selectServer(server)
+                        dismiss()
+                    } label: {
+                        ServerRowView(
+                            server: server,
+                            isSelected: appManager.currentServer.id == server.id,
+                            isChecking: appManager.isChecking(server)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        editButton(for: server)
+                        deleteButton(for: server)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        deleteButton(for: server)
+                        editButton(for: server)
+                            .tint(.blue)
+                    }
                 }
-                .contextMenu {
-                    editButton(for: server)
-                    deleteButton(for: server)
+                .navigationTitle("Servers")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        Button {
+                            Task { await appManager.checkAllServersStatus() }
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .disabled(!appManager.checkingServerIDs.isEmpty)
+                        addButton
+                    }
                 }
-                
+                .refreshable {
+                    await appManager.checkAllServersStatus()
+                }
             }
-            .navigationTitle("Servers")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: addButton)
+
+            Color.clear
+                .frame(width: 0, height: 0)
             .navigationDestination(isPresented: $showingAddSheet) {
                 ServerFormView() { server in
                     appManager.addServer(server)
@@ -42,10 +68,6 @@ struct ServerListView: View {
                 ServerFormView(server: server) { updatedServer in
                     appManager.updateServer(updatedServer)
                 }
-            }
-            
-            .refreshable {
-                await appManager.checkAllServersStatus()
             }
             .alert("连接错误", isPresented: $appManager.showError) {
                 Button("确定", role: .cancel) {}
@@ -122,10 +144,11 @@ struct ServerListView: View {
 struct ServerRowView: View {
     let server: ClashServer
     let isSelected: Bool
+    let isChecking: Bool
     
     private var versionDisplay: String {
-        guard let version = server.version else { return "" }
-        return version.count > 15 ? String(version.prefix(15)) + "..." : version
+        guard let version = server.version, !version.isEmpty else { return server.status.text }
+        return "\(server.status.text) · \(version)"
     }
     
     private var statusIcon: String {
@@ -138,39 +161,48 @@ struct ServerRowView: View {
     }
     
     var body: some View {
-        HStack(spacing: 16) {
-            // 状态指示器
+        HStack(spacing: 12) {
             ZStack {
                 Circle()
                     .fill(server.status.color.opacity(0.2))
-                    .frame(width: 40, height: 40)
-                
-                if isSelected {
+                    .frame(width: 38, height: 38)
+
+                if isChecking {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
                     Image(systemName: statusIcon)
                         .foregroundColor(server.status.color)
-                } else {
-                    Circle()
-                        .fill(server.status.color)
-                        .frame(width: 20, height: 20)
                 }
             }
-            
-            // 服务器信息
-            VStack(alignment: .center, spacing: 6) {
-                HStack {
-                    Text(server.displayName)
-                        .font(.headline)
-                        .lineLimit(1)
-                }
-                
-                if let errorMessage = server.errorMessage, !errorMessage.isEmpty {
-                    Text(errorMessage)
-                        .font(.caption)
-                        .foregroundColor(server.status.color)
-                        .lineLimit(1)
-                }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(server.displayName)
+                    .font(.headline)
+                    .lineLimit(1)
+
+                Text(server.endpointDescription)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                Text(isChecking ? "正在检测连接…" : (server.errorMessage?.isEmpty == false ? server.errorMessage! : versionDisplay))
+                    .font(.caption2)
+                    .foregroundStyle(server.status == .error || server.status == .unauthorized ? server.status.color : .secondary)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+
+            if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.tint)
+                    .accessibilityLabel("已选择")
             }
         }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 }
-

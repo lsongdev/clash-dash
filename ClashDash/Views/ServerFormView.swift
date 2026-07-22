@@ -37,10 +37,16 @@ struct ServerFormView: View {
     }
     var saveButton: some View {
         Button("Save") {
+            server.name = server.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            server.host = server.host
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: "^https?://", with: "", options: .regularExpression)
+                .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            server.port = server.port.trimmingCharacters(in: .whitespacesAndNewlines)
             onSave(server)
             dismiss()
         }
-        .disabled(server.isValid)
+        .disabled(!server.isValid)
     }
 }
  
