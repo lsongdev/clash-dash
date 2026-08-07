@@ -66,7 +66,7 @@ struct OverviewTab: View {
                 // 速率图表
                 SpeedChartView(speedHistory: monitor.speedHistory)
                     .padding()
-                    .background(Color(.systemBackground))
+                    .background(Color(.secondarySystemBackground))
                     .cornerRadius(12)
                     .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                 

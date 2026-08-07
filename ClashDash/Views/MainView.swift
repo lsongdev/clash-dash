@@ -93,20 +93,6 @@ struct MainView: View {
         }
         .navigationTitle(appManager.appName)
         .navigationBarTitleDisplayMode(.inline)
-//        .toolbar {
-//
-//            ToolbarItem(placement: .topBarLeading) {
-//                Button {
-//                    
-//                } label: {
-//                    Image(systemName: "chevron.left")
-//                }
-//            }
-//
-//            ToolbarItem(placement: .principal) {
-//                Text("aaa")
-//            }
-//        }
     }
 }
 
@@ -149,7 +135,7 @@ struct StatusCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color(.secondarySystemBackground))
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
@@ -183,7 +169,7 @@ struct ChartCard<Content: View>: View {
             content
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color(.secondarySystemBackground))
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
