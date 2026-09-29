@@ -6,23 +6,22 @@ struct StatusSelectionIndicator: View {
     var isChecking = false
 
     var body: some View {
-        HStack(spacing: 6) {
-            if isChecking {
-                ProgressView()
-                    .controlSize(.mini)
-                    .frame(width: 8, height: 8)
-            } else {
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 8, height: 8)
-            }
+        ZStack {
+            Circle()
+                .strokeBorder(isChecking ? Color.secondary : statusColor.opacity(0.65), lineWidth: 1.5)
+                .frame(width: 22, height: 22)
 
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 16))
-                .foregroundStyle(.tint)
-                .opacity(isSelected ? 1 : 0)
+            Circle()
+                .fill(isChecking ? Color.secondary : statusColor)
                 .frame(width: 16, height: 16)
+
+            if isSelected {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 9, weight: .heavy))
+                    .foregroundStyle(.white)
+            }
         }
+        .frame(width: 22, height: 22)
         .accessibilityHidden(true)
     }
 }

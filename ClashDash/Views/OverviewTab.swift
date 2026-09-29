@@ -47,7 +47,7 @@ struct OverviewTab: View {
                 
                 HStack(spacing: 16) {
                     StatusCard(
-                        title: "Active Connections",
+                        title: "Connections",
                         value: "\(monitor.activeConnections)",
                         icon: "link.circle.fill",
                         color: .orange
@@ -153,11 +153,11 @@ struct SpeedChartView: View {
     
     private func formatSpeed(_ speed: Double) -> String {
         if speed >= 1_000_000 {
-            return String(format: "%.1f MB/s", speed / 1_000_000)
+            return String(format: "%.1fM", speed / 1_000_000)
         } else if speed >= 1_000 {
-            return String(format: "%.1f KB/s", speed / 1_000)
+            return String(format: "%.0fK", speed / 1_000)
         } else {
-            return String(format: "%.0f B/s", speed)
+            return String(format: "%.0f", speed)
         }
     }
     
@@ -189,8 +189,9 @@ struct SpeedChartView: View {
                         AxisGridLine()
                         AxisValueLabel(horizontalSpacing: 0) {
                             Text(formatSpeed(speed))
-                                .font(.caption)
+                                .font(.system(size: 10))
                                 .foregroundColor(.secondary)
+                                .fixedSize(horizontal: true, vertical: false)
                                 .padding(.leading, 4)
                         }
                     }

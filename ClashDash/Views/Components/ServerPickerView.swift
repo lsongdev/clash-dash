@@ -17,11 +17,15 @@ struct ServerPickerView: View {
             showServerList = true
         } label: {
             HStack(spacing: 6) {
-                StatusSelectionIndicator(
-                    statusColor: server.status.color,
-                    isSelected: !appManager.servers.isEmpty,
-                    isChecking: appManager.isChecking(server)
-                )
+                if appManager.isChecking(server) {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .frame(width: 8, height: 8)
+                } else {
+                    Circle()
+                        .fill(server.status.color)
+                        .frame(width: 8, height: 8)
+                }
                 Text(appManager.servers.isEmpty ? "Select Server" : server.displayName)
                     .font(.caption)
                     .fontWeight(.medium)
