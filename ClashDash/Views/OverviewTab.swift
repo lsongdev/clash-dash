@@ -15,7 +15,6 @@ struct OverviewTab: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                // 速度卡片
                 HStack(spacing: 16) {
                     StatusCard(
                         title: "Download",
@@ -31,44 +30,51 @@ struct OverviewTab: View {
                     )
                 }
                 
-                // 总流量卡片
                 HStack(spacing: 16) {
                     StatusCard(
-                        title: "下载总量",
+                        title: "Total Download",
                         value: monitor.totalDownload,
                         icon: "arrow.down.circle.fill",
                         color: .blue
                     )
                     StatusCard(
-                        title: "上传总量",
+                        title: "Total Upload",
                         value: monitor.totalUpload,
                         icon: "arrow.up.circle.fill",
                         color: .green
                     )
                 }
                 
-                // 状态卡片
                 HStack(spacing: 16) {
                     StatusCard(
-                        title: "活动连接",
+                        title: "Active Connections",
                         value: "\(monitor.activeConnections)",
                         icon: "link.circle.fill",
                         color: .orange
                     )
                     StatusCard(
-                        title: "内存使用",
+                        title: "Memory Usage",
                         value: monitor.memoryUsage,
                         icon: "memorychip",
                         color: .purple
                     )
                 }
                 
-                // 速率图表
-                SpeedChartView(speedHistory: monitor.speedHistory)
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(12)
-                    .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                SpeedChartView(
+                    title: "Download Speed",
+                    icon: "arrow.down.circle",
+                    color: .blue,
+                    speedHistory: monitor.speedHistory,
+                    speed: \.download
+                )
+
+                SpeedChartView(
+                    title: "Upload Speed",
+                    icon: "arrow.up.circle",
+                    color: .green,
+                    speedHistory: monitor.speedHistory,
+                    speed: \.upload
+                )
                 
                 ChartCard(title: "Memory Usage", icon: "memorychip") {
                     Chart(monitor.memoryHistory) { record in
@@ -100,6 +106,7 @@ struct OverviewTab: View {
                     .chartXAxis {
                         AxisMarks(values: .automatic(desiredCount: 3))
                     }
+                    .animation(.smooth(duration: 0.4), value: monitor.memoryHistory.last?.id)
                 }
             }
             .padding(.horizontal)
@@ -119,26 +126,17 @@ struct OverviewTab: View {
 }
 
 
-// 更新速率图表组件
 struct SpeedChartView: View {
+    let title: String
+    let icon: String
+    let color: Color
     let speedHistory: [SpeedRecord]
+    let speed: KeyPath<SpeedRecord, Double>
     
     private var maxValue: Double {
-        // 获取当前数据中的最大值
-        let maxUpload = speedHistory.map { $0.upload }.max() ?? 0
-        let maxDownload = speedHistory.map { $0.download }.max() ?? 0
-        let currentMax = max(maxUpload, maxDownload)
-        
-        // 如果没有数据或数据��小，使用最小刻度
-        if currentMax < 100_000 { // 小于 100KB/s
-            return 100_000 // 100KB/s
-        }
-        
-        // 计算合适的刻度值
-        let magnitude = pow(10, floor(log10(currentMax)))
-        let normalized = currentMax / magnitude
-        
-        // 选择合适的刻度倍数：1, 2, 5, 10
+        let peak = max(1_000, speedHistory.map { $0[keyPath: speed] }.max() ?? 0)
+        let magnitude = pow(10, floor(log10(peak)))
+        let normalized = peak / magnitude
         let scale: Double
         if normalized <= 1 {
             scale = 1
@@ -150,7 +148,6 @@ struct SpeedChartView: View {
             scale = 10
         }
         
-        // 计算最终的最大值，并留出一些余量（120%）
         return magnitude * scale * 1.2
     }
     
@@ -165,70 +162,27 @@ struct SpeedChartView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                Text("Traffic")
-                    .font(.headline)
-            }
-            
+        ChartCard(title: title, icon: icon) {
             Chart {
-                // 添加预设的网格线和标签
-                ForEach(Array(stride(from: 0, to: maxValue, by: maxValue/4)), id: \.self) { value in
-                    RuleMark(
-                        y: .value("Speed", value)
-                    )
-                    .lineStyle(StrokeStyle(lineWidth: 1))
-                    .foregroundStyle(.gray.opacity(0.1))
-                }
-                
-                // 上传数据
-                ForEach(speedHistory) { record in
-                    LineMark(
-                        x: .value("Time", record.timestamp),
-                        y: .value("Speed", record.upload),
-                        series: .value("Type", "Upload")
-                    )
-                    .foregroundStyle(.green)
-                    .interpolationMethod(.catmullRom)
-                    .lineStyle(StrokeStyle(lineWidth: 2))
-                }
-                
                 ForEach(speedHistory) { record in
                     AreaMark(
                         x: .value("Time", record.timestamp),
                         yStart: .value("Speed", 0),
-                        yEnd: .value("Speed", record.upload),
-                        series: .value("Type", "Upload")
+                        yEnd: .value("Speed", record[keyPath: speed])
                     )
-                    .foregroundStyle(.green.opacity(0.1))
+                    .foregroundStyle(color.opacity(0.12))
                     .interpolationMethod(.catmullRom)
-                }
-                
-                // 下载数据
-                ForEach(speedHistory) { record in
+
                     LineMark(
                         x: .value("Time", record.timestamp),
-                        y: .value("Speed", record.download),
-                        series: .value("Type", "Download")
+                        y: .value("Speed", record[keyPath: speed])
                     )
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(color)
                     .interpolationMethod(.catmullRom)
                     .lineStyle(StrokeStyle(lineWidth: 2))
-                }
-                
-                ForEach(speedHistory) { record in
-                    AreaMark(
-                        x: .value("Time", record.timestamp),
-                        yStart: .value("Speed", 0),
-                        yEnd: .value("Speed", record.download),
-                        series: .value("Type", "Download")
-                    )
-                    .foregroundStyle(.blue.opacity(0.1))
-                    .interpolationMethod(.catmullRom)
                 }
             }
-            .frame(height: 200)
+            .frame(height: 160)
             .chartYAxis {
                 AxisMarks(preset: .extended, position: .leading) { value in
                     if let speed = value.as(Double.self) {
@@ -246,15 +200,7 @@ struct SpeedChartView: View {
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 3))
             }
-            
-            // 图例
-            HStack {
-                Label("Download", systemImage: "circle.fill")
-                    .foregroundColor(.blue)
-                Label("Upload", systemImage: "circle.fill")
-                    .foregroundColor(.green)
-            }
-            .font(.caption)
+            .animation(.smooth(duration: 0.4), value: speedHistory.last?.id)
         }
     }
 }

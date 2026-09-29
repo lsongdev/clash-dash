@@ -12,14 +12,14 @@ enum RuleType: String, CaseIterable {
     
     var description: String {
         switch self {
-        case .domain: return "匹配域名"
-        case .domainSuffix: return "匹配域名后缀"
-        case .domainKeyword: return "匹配域名关键字"
-        case .processName: return "匹配路由自身进程"
-        case .ipCidr: return "匹配数据目标IP"
-        case .srcIpCidr: return "匹配数据发起IP"
-        case .dstPort: return "匹配数据目标端口"
-        case .srcPort: return "匹配数据源端口"
+        case .domain: return "Match exact domain"
+        case .domainSuffix: return "Match domain suffix"
+        case .domainKeyword: return "Match domain keyword"
+        case .processName: return "Match process name"
+        case .ipCidr: return "Match destination IP range"
+        case .srcIpCidr: return "Match source IP range"
+        case .dstPort: return "Match destination port"
+        case .srcPort: return "Match source port"
         }
     }
     
@@ -51,14 +51,14 @@ enum RuleType: String, CaseIterable {
     
     var example: String {
         switch self {
-        case .domain: return "示例：www.example.com"
-        case .domainSuffix: return "示例：example.com"
-        case .domainKeyword: return "示例：example"
-        case .processName: return "示例：curl"
-        case .ipCidr: return "示例：192.168.1.0/24"
-        case .srcIpCidr: return "示例：192.168.1.100/32"
-        case .dstPort: return "示例：80"
-        case .srcPort: return "示例：8080"
+        case .domain: return "Example: www.example.com"
+        case .domainSuffix: return "Example: example.com"
+        case .domainKeyword: return "Example: example"
+        case .processName: return "Example: curl"
+        case .ipCidr: return "Example: 192.168.1.0/24"
+        case .srcIpCidr: return "Example: 192.168.1.100/32"
+        case .dstPort: return "Example: 80"
+        case .srcPort: return "Example: 8080"
         }
     }
-} 
+}

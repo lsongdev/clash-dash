@@ -56,9 +56,9 @@ struct ClashServer: Identifiable, Codable, Hashable {
                  .clientCertificateRequired:
                 return .serverError(-1)  // 使用状态码 -1 表示 SSL 问题
             case .userAuthenticationRequired:
-                return .unauthorized(message: "认证失败")
+                return .unauthorized(message: "Authentication failed")
             case .badServerResponse, .cannotParseResponse:
-                return .invalidResponse(message: "无效的服务器响应，请检查服务器配置")
+                return .invalidResponse(message: "Invalid server response. Check the server settings.")
             default:
                 return .unknown(error)
             }
@@ -89,10 +89,10 @@ enum ServerStatus: String, Codable {
     
     var text: String {
         switch self {
-        case .ok: return "在线"
-        case .unauthorized: return "认证失败"
-        case .error: return "连接失败"
-        case .unknown: return "未检测"
+        case .ok: return "Online"
+        case .unauthorized: return "Authentication failed"
+        case .error: return "Connection failed"
+        case .unknown: return "Not checked"
         }
     }
 }

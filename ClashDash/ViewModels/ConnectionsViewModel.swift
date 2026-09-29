@@ -30,13 +30,13 @@ class ConnectionsViewModel: ObservableObject {
         var message: String {
             switch self {
             case .disconnected:
-                return "未连接到服务器"
+                return "Not connected to a server"
             case .connecting:
-                return "正在连接服务器..."
+                return "Connecting to server…"
             case .connected:
-                return "已连接到服务器"
+                return "Connected to server"
             case .paused:
-                return "监控已暂停"
+                return "Monitoring paused"
             case .error(let message):
                 return message
             }
@@ -156,7 +156,7 @@ class ConnectionsViewModel: ObservableObject {
         guard let url = URL(string: "\(scheme)://\(server.host):\(server.port)/connections") else {
             log("❌ URL 构建失败")
             DispatchQueue.main.async { [weak self] in
-                self?.connectionState = .error("URL 构建失败")
+                self?.connectionState = .error("Could not build the server URL")
             }
             return
         }
@@ -188,7 +188,7 @@ class ConnectionsViewModel: ObservableObject {
                     
                     if httpResponse.statusCode == 401 {
                         DispatchQueue.main.async { [weak self] in
-                            self?.connectionState = .error("认证失败，请检查 Secret")
+                            self?.connectionState = .error("Authentication failed. Check the Secret.")
                         }
                         return
                     }
@@ -234,17 +234,17 @@ class ConnectionsViewModel: ObservableObject {
             case .secureConnectionFailed:
                 log("❌ SSL/TLS 连接失败")
                 DispatchQueue.main.async { [weak self] in
-                    self?.connectionState = .error("SSL/TLS 连接失败，请检查证书配置")
+                    self?.connectionState = .error("SSL/TLS connection failed. Check the certificate settings.")
                 }
             case .serverCertificateUntrusted:
                 log("❌ 服务器证书不受信任")
                 DispatchQueue.main.async { [weak self] in
-                    self?.connectionState = .error("服务器证书不受信任")
+                    self?.connectionState = .error("The server certificate is not trusted")
                 }
             case .clientCertificateRejected:
                 log("❌ 客户端证书被拒绝")
                 DispatchQueue.main.async { [weak self] in
-                    self?.connectionState = .error("客户端证书被拒绝")
+                    self?.connectionState = .error("The client certificate was rejected")
                 }
             default:
                 break
@@ -282,7 +282,7 @@ class ConnectionsViewModel: ObservableObject {
                 
                 if errorTracker.recordError() {
                     DispatchQueue.main.async { [weak self] in
-                        self?.connectionState = .error("连接失败，请检查网络或服务器状态")
+                        self?.connectionState = .error("Connection failed. Check the network or server.")
                     }
                     self.stopMonitoring()
                 } else {
@@ -438,7 +438,7 @@ class ConnectionsViewModel: ObservableObject {
             }
         } catch {
             log("❌ 解码错误：\(error)")
-            self.updateConnectionState(.error("数据解析错误: \(error.localizedDescription)"))
+            self.updateConnectionState(.error("Could not parse data: \(error.localizedDescription)"))
         }
     }
     
@@ -563,9 +563,9 @@ class ConnectionsViewModel: ObservableObject {
         if errorTracker.recordError() {
             DispatchQueue.main.async { [weak self] in
                 if let urlError = error as? URLError, urlError.code == .secureConnectionFailed {
-                    self?.connectionState = .error("SSL/TLS 连接失败，请检查证书配置")
+                    self?.connectionState = .error("SSL/TLS connection failed. Check the certificate settings.")
                 } else {
-                    self?.connectionState = .error("连接失败，请检查网络或服务器状态")
+                    self?.connectionState = .error("Connection failed. Check the network or server.")
                 }
             }
             stopMonitoring()

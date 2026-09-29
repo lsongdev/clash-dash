@@ -12,25 +12,25 @@ struct SettingsView: View {
     var body: some View {
         List {  
             // 常规设置
-            Section("常规设置") {
-                NavigationLink("外观设置", destination: AppearanceView())
+            Section("General") {
+                NavigationLink("Appearance", destination: AppearanceView())
                 
-                Picker("运行模式", selection: $viewModel.mode) {
-                    Text("规则模式").tag("rule")
-                    Text("全局模式").tag("global")
-                    Text("直连模式").tag("direct")
-                    Text("脚本模式").tag("script")
+                Picker("Mode", selection: $viewModel.mode) {
+                    Text("Rule").tag("rule")
+                    Text("Global").tag("global")
+                    Text("Direct").tag("direct")
+                    Text("Script").tag("script")
                 }
                 .onChange(of: viewModel.mode) { newValue in
                     viewModel.updateConfig("mode", value: newValue, server: server)
                 }
                  
-                Picker("日志等级", selection: $viewModel.logLevel) {
-                    Text("调试").tag("debug")
-                    Text("信息").tag("info")
-                    Text("警告").tag("warning")
-                    Text("错误").tag("error")
-                    Text("静默").tag("silent")
+                Picker("Log Level", selection: $viewModel.logLevel) {
+                    Text("Debug").tag("debug")
+                    Text("Info").tag("info")
+                    Text("Warning").tag("warning")
+                    Text("Error").tag("error")
+                    Text("Silent").tag("silent")
                 }
                 .onChange(of: viewModel.logLevel) { newValue in
                     viewModel.updateConfig("log-level", value: newValue, server: server)
@@ -38,21 +38,21 @@ struct SettingsView: View {
                 NavigationLink {
                     LogView(server: server)
                 } label: {
-                    Text("日志查询")
+                    Text("Logs")
                 }
                 
                 NavigationLink {
                     DNSQueryView(server: server)
                 } label: {
-                    Text("DNS查询")
+                    Text("DNS Lookup")
                 }
                 
             }
             
             // 端口设置
-            Section("端口设置") {
+            Section("Ports") {
                 PortSettingRow(
-                    title: "HTTP 端口",
+                    title: "HTTP Port",
                     value: $viewModel.tempHttpPort,
                     savedValue: viewModel.httpPort,
                     configKey: "port"
@@ -63,7 +63,7 @@ struct SettingsView: View {
                 }
                 
                 PortSettingRow(
-                    title: "Socks5 端口",
+                    title: "SOCKS5 Port",
                     value: $viewModel.tempSocksPort,
                     savedValue: viewModel.socksPort,
                     configKey: "socks-port"
@@ -74,7 +74,7 @@ struct SettingsView: View {
                 }
                 
                 PortSettingRow(
-                    title: "混合端口",
+                    title: "Mixed Port",
                     value: $viewModel.tempMixedPort,
                     savedValue: viewModel.mixedPort,
                     configKey: "mixed-port"
@@ -85,7 +85,7 @@ struct SettingsView: View {
                 }
                 
                 PortSettingRow(
-                    title: "重定向端口",
+                    title: "Redirect Port",
                     value: $viewModel.tempRedirPort,
                     savedValue: viewModel.redirPort,
                     configKey: "redir-port"
@@ -96,7 +96,7 @@ struct SettingsView: View {
                 }
                 
                 PortSettingRow(
-                    title: "TProxy 端口",
+                    title: "TProxy Port",
                     value: $viewModel.tempTproxyPort,
                     savedValue: viewModel.tproxyPort,
                     configKey: "tproxy-port"
@@ -106,7 +106,7 @@ struct SettingsView: View {
                     }
                 }
                 
-                Toggle("允许局域网连接", isOn: $viewModel.allowLan)
+                Toggle("Allow LAN Connections", isOn: $viewModel.allowLan)
                     .onChange(of: viewModel.allowLan) { newValue in
                         viewModel.updateConfig("allow-lan", value: newValue, server: server)
                     }
@@ -114,14 +114,14 @@ struct SettingsView: View {
             
             // TUN 设置
             if viewModel.config?.isMetaServer == true {
-                Section("TUN 设置") {
-                    Toggle("启用 TUN 模式", isOn: $viewModel.tunEnable)
+                Section("TUN") {
+                    Toggle("Enable TUN", isOn: $viewModel.tunEnable)
                         .onChange(of: viewModel.tunEnable) { newValue in
                             viewModel.updateConfig("tun.enable", value: newValue, server: server)
                         }
                     
                     HStack {
-                        Text("TUN 协议栈")
+                        Text("TUN Stack")
                         Spacer()
                         Picker("", selection: $viewModel.tunStack) {
                             Text("gVisor").tag("gVisor")
@@ -135,7 +135,7 @@ struct SettingsView: View {
                     }
                     
                     HStack {
-                        Text("设备名称")
+                        Text("Device Name")
                         Spacer()
                         TextField("utun", text: $viewModel.tunDevice)
                             .multilineTextAlignment(.trailing)
@@ -145,7 +145,7 @@ struct SettingsView: View {
                     }
                     
                     HStack {
-                        Text("网卡名称")
+                        Text("Interface Name")
                         Spacer()
                         TextField("", text: $viewModel.interfaceName)
                             .multilineTextAlignment(.trailing)
@@ -156,10 +156,10 @@ struct SettingsView: View {
                 }
                 
                 // 系统维护
-                Section("系统维护") {
+                Section("Maintenance") {
                     Button(action: { viewModel.reloadConfig(server: server) }) {
                         HStack {
-                            Text("重载配置文件")
+                            Text("Reload Configuration")
                             Spacer()
                             Image(systemName: "arrow.clockwise")
                         }
@@ -167,7 +167,7 @@ struct SettingsView: View {
                     
                     Button(action: { viewModel.updateGeoDatabase(server: server) }) {
                         HStack {
-                            Text("更新 GEO 数据库")
+                            Text("Update GEO Database")
                             Spacer()
                             Image(systemName: "globe.asia.australia")
                         }
@@ -175,7 +175,7 @@ struct SettingsView: View {
                     
                     Button(action: { viewModel.clearFakeIP(server: server) }) {
                         HStack {
-                            Text("清空 FakeIP 数据库")
+                            Text("Clear FakeIP Cache")
                             Spacer()
                             Image(systemName: "trash")
                         }
@@ -186,7 +186,7 @@ struct SettingsView: View {
                         showingRestartAlert = true
                     }) {
                         HStack {
-                            Text("重启核心")
+                            Text("Restart Core")
                             Spacer()
                             Image(systemName: "power")
                         }
@@ -197,7 +197,7 @@ struct SettingsView: View {
                         showingUpgradeAlert = true
                     }) {
                         HStack {
-                            Text("更新核心")
+                            Text("Upgrade Core")
                                 .foregroundColor(.red)
                             Spacer()
                             Image(systemName: "exclamationmark.triangle")
@@ -214,7 +214,7 @@ struct SettingsView: View {
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
-                Button("完成") {
+                Button("Done") {
                     // hideKeyboard()
                 }
             }
@@ -222,21 +222,21 @@ struct SettingsView: View {
         .sheet(isPresented: $showingServerPicker) {
             ServerListView()
         }
-        .alert("重启核心", isPresented: $showingRestartAlert) {
-            Button("取消", role: .cancel) { }
-            Button("确认重启", role: .destructive) {
+        .alert("Restart Core", isPresented: $showingRestartAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Restart", role: .destructive) {
                 viewModel.restartCore(server: server)
             }
         } message: {
-            Text("重启核心会导致服务暂时中断，确定要继续吗？")
+            Text("Restarting the core will briefly interrupt service. Continue?")
         }
-        .alert("更新核心", isPresented: $showingUpgradeAlert) {
-            Button("取消", role: .cancel) { }
-            Button("确认更新", role: .destructive) {
+        .alert("Upgrade Core", isPresented: $showingUpgradeAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Upgrade", role: .destructive) {
                 viewModel.upgradeCore(server: server)
             }
         } message: {
-            Text("更新核心是一个高风险操作，可能会导致服务不可用。除非您明确知道自己在做什么，否则不建议执行此操作。\n\n确定要继续吗？")
+            Text("Upgrading the core may make the service unavailable. Continue only if you understand the risks.\n\nContinue?")
         }
         
         .navigationTitle("Settings")

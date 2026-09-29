@@ -13,6 +13,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		A10000000000000000000009 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9D3823D82D0816F7002FF881 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9D3823DF2D0816F7002FF881;
+			remoteInfo = ClashDash;
+		};
 		97859CA72D1477C9004CE49F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 9D3823D82D0816F7002FF881 /* Project object */;
@@ -41,6 +48,7 @@
 		97859C952D1477C7004CE49F /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		97859C972D1477C7004CE49F /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		9D3823E02D0816F7002FF881 /* ClashDash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClashDash.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000001 /* ClashDashTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClashDashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -61,6 +69,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		A10000000000000000000002 /* ClashDashTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ClashDashTests;
+			sourceTree = "<group>";
+		};
 		97859C992D1477C7004CE49F /* ClashDashWeiget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -80,6 +93,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		A10000000000000000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		97859C902D1477C7004CE49F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -112,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				9D3823E22D0816F7002FF881 /* ClashDash */,
+				A10000000000000000000002 /* ClashDashTests */,
 				97859C992D1477C7004CE49F /* ClashDashWeiget */,
 				97859C942D1477C7004CE49F /* Frameworks */,
 				9D3823E12D0816F7002FF881 /* Products */,
@@ -122,6 +143,7 @@
 			isa = PBXGroup;
 			children = (
 				9D3823E02D0816F7002FF881 /* ClashDash.app */,
+				A10000000000000000000001 /* ClashDashTests.xctest */,
 				97859C932D1477C7004CE49F /* ClashDashWeigetExtension.appex */,
 			);
 			name = Products;
@@ -130,6 +152,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		A10000000000000000000004 /* ClashDashTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000000000000000000006 /* Build configuration list for PBXNativeTarget "ClashDashTests" */;
+			buildPhases = (
+				A10000000000000000000005 /* Sources */,
+				A10000000000000000000003 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1000000000000000000000A /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A10000000000000000000002 /* ClashDashTests */,
+			);
+			name = ClashDashTests;
+			packageProductDependencies = (
+			);
+			productName = ClashDashTests;
+			productReference = A10000000000000000000001 /* ClashDashTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		97859C922D1477C7004CE49F /* ClashDashWeigetExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97859CAE2D1477C9004CE49F /* Build configuration list for PBXNativeTarget "ClashDashWeigetExtension" */;
@@ -210,6 +254,7 @@
 			targets = (
 				9D3823DF2D0816F7002FF881 /* ClashDash */,
 				97859C922D1477C7004CE49F /* ClashDashWeigetExtension */,
+				A10000000000000000000004 /* ClashDashTests */,
 			);
 		};
 /* End PBXProject section */
@@ -232,6 +277,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		A10000000000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		97859C8F2D1477C7004CE49F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -249,6 +301,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		A1000000000000000000000A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9D3823DF2D0816F7002FF881 /* ClashDash */;
+			targetProxy = A10000000000000000000009 /* PBXContainerItemProxy */;
+		};
 		97859CA82D1477C9004CE49F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 97859C922D1477C7004CE49F /* ClashDashWeigetExtension */;
@@ -257,6 +314,36 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		A10000000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				PRODUCT_BUNDLE_IDENTIFIER = org.lsong.clashdash.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ClashDash.app/ClashDash";
+			};
+			name = Debug;
+		};
+		A10000000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				PRODUCT_BUNDLE_IDENTIFIER = org.lsong.clashdash.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ClashDash.app/ClashDash";
+			};
+			name = Release;
+		};
 		97859CAB2D1477C9004CE49F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -509,6 +596,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		A10000000000000000000006 /* Build configuration list for PBXNativeTarget "ClashDashTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000000000000000000007 /* Debug */,
+				A10000000000000000000008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		97859CAE2D1477C9004CE49F /* Build configuration list for PBXNativeTarget "ClashDashWeigetExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

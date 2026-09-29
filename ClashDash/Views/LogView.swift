@@ -10,16 +10,16 @@ struct LogView: View {
             // 日志列表
             if viewModel.logs.isEmpty && viewModel.isConnected {
                 EmptyStateView(
-                    title: "暂无日志",
+                    title: "No Logs Yet",
                     systemImage: "doc.text",
-                    description: "正在等待日志..."
+                    description: "Waiting for logs…"
                 )
                 .transition(.opacity)
             } else if !viewModel.isConnected {
                 EmptyStateView(
-                    title: "连接断开",
+                    title: "Disconnected",
                     systemImage: "wifi.slash",
-                    description: "正在尝试重新连接..."
+                    description: "Trying to reconnect…"
                 )
                 .transition(.opacity)
             } else {
@@ -33,7 +33,7 @@ struct LogView: View {
                 }
             }
         }
-        .navigationTitle("日志")
+        .navigationTitle("Logs")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             viewModel.connect(to: server)

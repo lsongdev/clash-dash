@@ -11,29 +11,29 @@ struct DNSQueryView: View {
     var body: some View {
         Form {
             Section {
-                TextField("输入域名", text: $domainName)
+                TextField("Enter a domain", text: $domainName)
                     .autocapitalization(.none)
                     .keyboardType(.URL)
                     .textInputAutocapitalization(.never)
                 
-                Picker("记录类型", selection: $selectedType) {
+                Picker("Record Type", selection: $selectedType) {
                     ForEach(queryTypes, id: \.self) { type in
                         Text(type).tag(type)
                     }
                 }
                 
-                Button("查询") {
+                Button("Query") {
                     viewModel.queryDNS(server: server, domain: domainName, type: selectedType)
                 }
                 .disabled(domainName.isEmpty)
             } header: {
-                Text("DNS 查询")
+                Text("DNS Lookup")
             } footer: {
-                Text("支持查询 A、AAAA 和 MX 记录")
+                Text("Supports A, AAAA, and MX records")
             }
             
             if !viewModel.results.isEmpty {
-                Section("查询结果") {
+                Section("Results") {
                     ForEach(viewModel.results, id: \.self) { result in
                         Text(result)
                             .font(.system(.body, design: .monospaced))
@@ -42,7 +42,7 @@ struct DNSQueryView: View {
                 }
             }
         }
-        .navigationTitle("域名查询")
+        .navigationTitle("DNS Lookup")
         .navigationBarTitleDisplayMode(.inline)
     }
-} 
+}

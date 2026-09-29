@@ -1,11 +1,11 @@
 import SwiftUI
 
 enum LogLevel: String, CaseIterable {
-    case debug = "调试"
-    case info = "信息"
-    case warning = "警告"
-    case error = "错误"
-    case silent = "静默"
+    case debug = "Debug"
+    case info = "Info"
+    case warning = "Warning"
+    case error = "Error"
+    case silent = "Silent"
     
     var systemImage: String {
         switch self {
@@ -36,4 +36,4 @@ enum LogLevel: String, CaseIterable {
         case .silent: return "silent"
         }
     }
-} 
+}

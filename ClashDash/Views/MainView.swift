@@ -132,6 +132,7 @@ struct StatusCard: View {
                 .bold()
                 .minimumScaleFactor(0.5)
                 .contentTransition(.numericText())
+                .animation(.smooth(duration: 0.4), value: value)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()

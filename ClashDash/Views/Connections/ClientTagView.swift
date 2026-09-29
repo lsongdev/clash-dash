@@ -45,7 +45,7 @@ struct ClientTagView: View {
                         }
                     }
                 } header: {
-                    Text("已保存的标签")
+                    Text("Saved Tags")
                 }
                 
                 Section {
@@ -77,14 +77,14 @@ struct ClientTagView: View {
                         .frame(height: 44)
                     }
                 } header: {
-                    Text("活跃连接")
+                    Text("Active Connections")
                 }
             }
-            .navigationTitle("客户端标签")
+            .navigationTitle("Client Tags")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("关闭") {
+                    Button("Close") {
                         dismiss()
                     }
                 }
@@ -109,24 +109,24 @@ struct AddTagSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("标签名称", text: $tagName)
+                    TextField("Tag Name", text: $tagName)
                     Text(ip)
                         .foregroundColor(.secondary)
                 } header: {
-                    Text("添加新标签")
+                    Text("Add a Tag")
                 }
             }
-            .navigationTitle("新建标签")
+            .navigationTitle("New Tag")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("保存") {
+                    Button("Save") {
                         viewModel.addTag(name: tagName, ip: ip)
                         dismiss()
                     }

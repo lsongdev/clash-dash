@@ -69,8 +69,8 @@ struct ServerListView: View {
                     appManager.updateServer(updatedServer)
                 }
             }
-            .alert("连接错误", isPresented: $appManager.showError) {
-                Button("确定", role: .cancel) {}
+            .alert("Connection Error", isPresented: $appManager.showError) {
+                Button("OK", role: .cancel) {}
             } message: {
                 if let details = appManager.errorDetails {
                     Text("\(appManager.errorMessage ?? "")\n\n\(details)")
@@ -151,30 +151,13 @@ struct ServerRowView: View {
         return "\(server.status.text) · \(version)"
     }
     
-    private var statusIcon: String {
-        switch server.status {
-        case .ok: return "checkmark.circle.fill"
-        case .error: return "exclamationmark.circle.fill"
-        case .unauthorized: return "lock.circle.fill"
-        case .unknown: return "questionmark.circle.fill"
-        }
-    }
-    
     var body: some View {
         HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(server.status.color.opacity(0.2))
-                    .frame(width: 38, height: 38)
-
-                if isChecking {
-                    ProgressView()
-                        .controlSize(.small)
-                } else {
-                    Image(systemName: statusIcon)
-                        .foregroundColor(server.status.color)
-                }
-            }
+            StatusSelectionIndicator(
+                statusColor: server.status.color,
+                isSelected: isSelected,
+                isChecking: isChecking
+            )
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(server.displayName)
@@ -186,23 +169,17 @@ struct ServerRowView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
 
-                Text(isChecking ? "正在检测连接…" : (server.errorMessage?.isEmpty == false ? server.errorMessage! : versionDisplay))
+                Text(isChecking ? "Checking connection…" : (server.errorMessage?.isEmpty == false ? server.errorMessage! : versionDisplay))
                     .font(.caption2)
                     .foregroundStyle(server.status == .error || server.status == .unauthorized ? server.status.color : .secondary)
                     .lineLimit(1)
             }
 
             Spacer(minLength: 8)
-
-            if isSelected {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(.tint)
-                    .accessibilityLabel("已选择")
-            }
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+        .accessibilityValue(isSelected ? "Selected, \(server.status.text)" : server.status.text)
     }
 }

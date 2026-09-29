@@ -24,19 +24,19 @@ struct ConnectionsTab: View {
         
         var title: String {
             switch self {
-            case .active: return "正活跃"
-            case .closed: return "已断开"
+            case .active: return "Active"
+            case .closed: return "Closed"
             }
         }
     }
     
     // 添加排序类型枚举
     private enum SortOption: String, CaseIterable {
-        case startTime = "开始时间"
-        case download = "下载流量"
-        case upload = "上传流量"
-        case downloadSpeed = "下载速度"
-        case uploadSpeed = "上传速度"
+        case startTime = "Start Time"
+        case download = "Download"
+        case upload = "Upload"
+        case downloadSpeed = "Download Speed"
+        case uploadSpeed = "Upload Speed"
         
         var icon: String {
             switch self {
@@ -87,13 +87,13 @@ struct ConnectionsTab: View {
         Menu {
             let devices = getActiveDevices()
             if devices.isEmpty {
-                Text("暂无设备记录")
+                Text("No devices yet")
             } else {
-                Button("显示全部") {
+                Button("Show All") {
                     selectedDevices.removeAll()
                 }
                 
-                Button("全部隐藏") {
+                Button("Hide All") {
                     selectedDevices = Set(devices.map(\.id))
                 }
                 Divider()
@@ -348,23 +348,23 @@ struct ConnectionsTab: View {
                     }
             }
         }
-        .alert("确定清理已断开连接", isPresented: $showClearClosedConfirmation) {
-            Button("取消", role: .cancel) { }
-            Button("清理", role: .destructive) {
+        .alert("Clear Closed Connections?", isPresented: $showClearClosedConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear", role: .destructive) {
                 viewModel.clearClosedConnections()
                 showMenu = false
             }
         } message: {
-            Text("确定要清除所有已断开的连接吗？\n这将从列表中移除 \(closedConnectionsCount) 个已断开的连接。")
+            Text("Remove \(closedConnectionsCount) closed connections from the list?")
         }
-        .alert("确认终止所有连接", isPresented: $showCloseAllConfirmation) {
-            Button("取消", role: .cancel) { }
-            Button("终止", role: .destructive) {
+        .alert("Close All Connections?", isPresented: $showCloseAllConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Close All", role: .destructive) {
                 viewModel.closeAllConnections()
                 showMenu = false
             }
         } message: {
-            Text("确定要终止所有活跃的连接吗？\n这将断开 \(activeConnectionsCount) 个正在活跃的连接。")
+            Text("Disconnect \(activeConnectionsCount) active connections?")
         }
     }
     
@@ -401,10 +401,10 @@ struct ConnectionsTab: View {
     var filterBar: some View {
         HStack(spacing: 6) {
             // 连接状态切换器
-            Picker("连接状态", selection: $connectionFilter) {
-                Text("正活跃 (\(activeConnectionsCount))")
+            Picker("Connection Status", selection: $connectionFilter) {
+                Text("Active (\(activeConnectionsCount))")
                     .tag(ConnectionFilter.active)
-                Text("已断开 (\(closedConnectionsCount))")
+                Text("Closed (\(closedConnectionsCount))")
                     .tag(ConnectionFilter.closed)
             }
             .pickerStyle(.segmented)
@@ -456,11 +456,11 @@ struct ConnectionsTab: View {
                 .font(.system(size: 48))
                 .foregroundColor(.secondary)
             
-            Text("暂无连接")
+            Text("No Connections")
                 .font(.headline)
                 .foregroundColor(.primary)
             
-            Text("当前没有活跃的网络连接")
+            Text("There are no active network connections")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }

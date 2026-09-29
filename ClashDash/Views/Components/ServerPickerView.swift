@@ -17,15 +17,12 @@ struct ServerPickerView: View {
             showServerList = true
         } label: {
             HStack(spacing: 6) {
-                if appManager.isChecking(server) {
-                    ProgressView()
-                        .controlSize(.mini)
-                } else {
-                    Circle()
-                        .fill(server.status.color)
-                        .frame(width: 8, height: 8)
-                }
-                Text(appManager.servers.isEmpty ? "选择服务器" : server.displayName)
+                StatusSelectionIndicator(
+                    statusColor: server.status.color,
+                    isSelected: !appManager.servers.isEmpty,
+                    isChecking: appManager.isChecking(server)
+                )
+                Text(appManager.servers.isEmpty ? "Select Server" : server.displayName)
                     .font(.caption)
                     .fontWeight(.medium)
                     .lineLimit(1)
@@ -39,8 +36,8 @@ struct ServerPickerView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(appManager.servers.isEmpty ? "选择服务器" : "当前服务器，\(server.displayName)")
-        .accessibilityValue(appManager.isChecking(server) ? "检测中" : server.status.text)
+        .accessibilityLabel(appManager.servers.isEmpty ? "Select Server" : "Current Server, \(server.displayName)")
+        .accessibilityValue(appManager.isChecking(server) ? "Checking" : server.status.text)
         .sheet(isPresented: $showServerList) {
             ServerListView()
             .presentationDetents([.medium, .large])

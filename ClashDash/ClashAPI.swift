@@ -13,7 +13,7 @@ struct Rule: Codable, Identifiable, Hashable {
     let proxy: String
     let size: Int?  // 改为可选类型，适配原版 Clash 内核
     
-    var id: String { "\(type)-\(payload)" }
+    var id: String { "\(type)-\(payload)-\(proxy)" }
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
@@ -46,7 +46,7 @@ struct RuleProvider: Codable, Identifiable {
             formatter.dateFormat = "MM-dd HH:mm"
             return formatter.string(from: date)
         }
-        return "未知"
+        return "Unknown"
     }
 }
 
@@ -60,7 +60,7 @@ struct ProxyDetail: Codable, Identifiable {
     let id: String?
     let name: String
     let type: String
-    let alive: Bool
+    let alive: Bool?
     let history: [ProxyHistory]
     // group
     let all: [String]?
@@ -72,6 +72,37 @@ struct ProxyDetail: Codable, Identifiable {
     
     var isGroup: Bool {
         return all != nil
+    }
+
+    static func unresolved(name: String) -> ProxyDetail {
+        ProxyDetail(id: nil, name: name, type: "Unknown", alive: nil, history: [], all: nil, now: nil)
+    }
+}
+
+/// Keeps the order reported by each group's `all` array, including names that
+/// have no detail object in either API response.
+struct ProxyCatalog {
+    let groups: [ProxyDetail]
+    private let detailsByName: [String: ProxyDetail]
+
+    init(proxies: [ProxyDetail], providers: [ProxyProvider]) {
+        groups = proxies.filter(\.isGroup)
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        var details = Dictionary(proxies.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+        for provider in providers {
+            for proxy in provider.proxies where details[proxy.name] == nil {
+                details[proxy.name] = proxy
+            }
+        }
+        detailsByName = details
+    }
+
+    func nodes(in group: ProxyDetail) -> [ProxyDetail] {
+        (group.all ?? []).map { detailsByName[$0] ?? .unresolved(name: $0) }
+    }
+
+    func currentNode(in group: ProxyDetail) -> ProxyDetail? {
+        group.now.flatMap { detailsByName[$0] }
     }
 }
 
@@ -133,6 +164,12 @@ private struct DelayResponse: Codable {
 
 // MARK: - Clash API
 class ClashAPI: NSObject, URLSessionDelegate, URLSessionTaskDelegate {
+    private let session: URLSession
+
+    init(session: URLSession = .shared) {
+        self.session = session
+        super.init()
+    }
 
     private func apiURL(
         server: ClashServer,
@@ -167,46 +204,34 @@ class ClashAPI: NSObject, URLSessionDelegate, URLSessionTaskDelegate {
     
     func getVersion(_ server: ClashServer) async throws -> String {
         let request = server.makeRequest(path: "/version")
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse(message: "服务器返回了无效响应")
-        }
-        guard (200...299).contains(httpResponse.statusCode) else {
-            if httpResponse.statusCode == 401 {
-                throw NetworkError.unauthorized(message: "认证失败，请检查 Secret")
-            }
-            throw NetworkError.serverError(httpResponse.statusCode)
-        }
+        let (data, response) = try await session.data(for: request)
+        try validate(response)
         let res = try JSONDecoder().decode(VersionResponse.self, from: data)
         return res.version
     }
     
     func fetchRules(server: ClashServer) async throws -> [Rule] {
         let request = server.makeRequest(path: "rules")
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
+        try validate(response)
         let res = try JSONDecoder().decode(RulesResponse.self, from: data)
         return res.rules
     }
     
     func fetchRuleProviders(server: ClashServer) async throws -> [RuleProvider] {
         let request = server.makeRequest(path: "providers/rules")
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
+        try validate(response)
         let res = try JSONDecoder().decode(RuleProvidersResponse.self, from: data)
-        let providers = res.providers.map { name, provider in
-            
-            return provider
-        }
-        return providers
+        return res.providers.values.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
     
     func fetchProxies(server: ClashServer) async throws -> [ProxyDetail] {
         let request = server.makeRequest(path: "proxies")
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
+        try validate(response)
         let res = try JSONDecoder().decode(ProxyResponse.self, from: data)
-        let proxies = res.proxies.compactMap { name, proxy in
-            return proxy
-        }
-        return proxies
+        return res.proxies.values.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
     
     func fetchProxyGroups(server: ClashServer) async throws -> [ProxyDetail] {
@@ -223,7 +248,7 @@ class ClashAPI: NSObject, URLSessionDelegate, URLSessionTaskDelegate {
         request.url = url
         request.httpBody = try JSONEncoder().encode(["name": proxyName])
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await session.data(for: request)
         try validate(response)
     }
 
@@ -244,7 +269,7 @@ class ClashAPI: NSObject, URLSessionDelegate, URLSessionTaskDelegate {
         var request = server.makeRequest(path: "group")
         request.url = url
         request.timeoutInterval = TimeInterval(timeout) / 1000 + 2
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
         try validate(response)
         return try JSONDecoder().decode([String: Int].self, from: data)
     }
@@ -266,33 +291,32 @@ class ClashAPI: NSObject, URLSessionDelegate, URLSessionTaskDelegate {
         var request = server.makeRequest(path: "proxies")
         request.url = url
         request.timeoutInterval = TimeInterval(timeout) / 1000 + 2
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
         try validate(response)
         return try JSONDecoder().decode(DelayResponse.self, from: data).delay
     }
     
     func fetchProxyProviders(server: ClashServer) async throws -> [ProxyProvider] {
         let request = server.makeRequest(path: "providers/proxies")
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
+        try validate(response)
         let providersResponse = try JSONDecoder().decode(ProxyProvidersResponse.self, from: data)
-        let providers: [ProxyProvider] = providersResponse.providers.compactMap { name, provider in
-            // 返回的数据 包含 default 和 vehicleType: "Compatible" 兼容代理组
-            // 只有当 vehicleType 为 HTTP 或有 subscriptionInfo 时才包含
-            guard provider.vehicleType == "HTTP" || provider.subscriptionInfo != nil else {
+        let providers: [ProxyProvider] = providersResponse.providers.compactMap { _, provider in
+            // Clash also returns a virtual "default" provider for built-in proxies.
+            guard provider.vehicleType != "Compatible" || provider.subscriptionInfo != nil else {
                 return nil
             }
             return provider
         }
-        return providers
+        return providers.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
     
     func refreshRulesProvider(server: ClashServer, name: String) async throws {
-        let request = server.makeRequest(path: "providers/rules/\(name)", method: "PUT")
-        let (_, response) = try await URLSession.shared.data(for: request)
-        if let httpResponse = response as? HTTPURLResponse,
-           httpResponse.statusCode == 204 {
-            // TODO:
-        }
+        let url = try apiURL(server: server, pathSegments: ["providers", "rules", name])
+        var request = server.makeRequest(path: "providers/rules", method: "PUT")
+        request.url = url
+        let (_, response) = try await session.data(for: request)
+        try validate(response)
     }
 }
 

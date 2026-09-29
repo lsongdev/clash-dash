@@ -9,20 +9,20 @@ struct ServerFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("服务器信息") {
-                    TextField("名称（可选）", text: $server.name)
+                Section("Server Details") {
+                    TextField("Name (optional)", text: $server.name)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    TextField("服务器地址", text: $server.host)
+                    TextField("Server Address", text: $server.host)
                         .textInputAutocapitalization(.never)
-                    TextField("端口", text: $server.port)
+                    TextField("Port", text: $server.port)
                         .keyboardType(.numberPad)
-                    TextField("密钥", text: $server.secret)
+                    TextField("Secret", text: $server.secret)
                         .textInputAutocapitalization(.never)
                     
                     Toggle(isOn: $server.useSSL) {
                         Label {
-                            Text("使用 HTTPS")
+                            Text("Use HTTPS")
                         } icon: {
                             Image(systemName: "lock.fill")
                                 .foregroundColor(server.useSSL ? .green : .secondary)

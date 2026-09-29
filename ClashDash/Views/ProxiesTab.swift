@@ -49,7 +49,8 @@ struct ProxiesTab: View {
     }
 
     private var proxyList: some View {
-        List {
+        let catalog = ProxyCatalog(proxies: proxies, providers: providers)
+        return List {
             if let loadError {
                 Label(loadError, systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
@@ -62,7 +63,7 @@ struct ProxiesTab: View {
                     ForEach(groups, id: \.name) { group in
                         ProxyGroupCard(
                             group: group,
-                            proxies: proxies,
+                            catalog: catalog,
                             onSelect: { proxyName in
                                 try await appManager.api.selectProxy(
                                     server: server,
@@ -123,28 +124,44 @@ struct ProxiesTab: View {
             return
         }
 
-        if showLoading { isLoading = true }
+        if showLoading {
+            isLoading = true
+            groups = []
+            proxies = []
+            providers = []
+        }
         loadError = nil
-        defer { isLoading = false }
+        defer {
+            if appManager.currentServer.connectionIdentifier == requestedServer.connectionIdentifier {
+                isLoading = false
+            }
+        }
 
+        var errors: [String] = []
+        var newProxies = proxies
+        var newProviders = providers
         do {
-            async let fetchedProxies = appManager.api.fetchProxies(server: requestedServer)
-            async let fetchedProviders = appManager.api.fetchProxyProviders(server: requestedServer)
-            let (newProxies, newProviders) = try await (fetchedProxies, fetchedProviders)
-            guard appManager.currentServer.connectionIdentifier == requestedServer.connectionIdentifier else { return }
-
-            proxies = newProxies
-            groups = newProxies
-                .filter(\.isGroup)
-                .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-            providers = newProviders
-                .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            newProxies = try await appManager.api.fetchProxies(server: requestedServer)
         } catch is CancellationError {
             return
         } catch {
-            guard appManager.currentServer.connectionIdentifier == requestedServer.connectionIdentifier else { return }
-            loadError = error.localizedDescription
+            errors.append("Proxy groups: \(error.localizedDescription)")
         }
+
+        do {
+            newProviders = try await appManager.api.fetchProxyProviders(server: requestedServer)
+        } catch is CancellationError {
+            return
+        } catch {
+            errors.append("Proxy providers: \(error.localizedDescription)")
+        }
+        guard appManager.currentServer.connectionIdentifier == requestedServer.connectionIdentifier else { return }
+        proxies = newProxies
+        groups = newProxies
+            .filter(\.isGroup)
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        providers = newProviders
+        loadError = errors.isEmpty ? nil : errors.joined(separator: "\n")
     }
 }
 
@@ -152,21 +169,20 @@ struct ProxyGroupCard: View {
     @State private var showingSelector = false
 
     let group: ProxyDetail
-    let proxies: [ProxyDetail]
+    let catalog: ProxyCatalog
     let onSelect: (String) async throws -> Void
     let onTestGroup: () async throws -> Void
     let onTestNode: (String) async throws -> Void
 
     private var groupNodes: [ProxyDetail] {
-        (group.all ?? []).compactMap { name in proxies.first { $0.name == name } }
+        catalog.nodes(in: group)
     }
 
     private var currentNode: ProxyDetail? {
-        guard let currentName = group.now else { return nil }
-        return proxies.first { $0.name == currentName }
+        catalog.currentNode(in: group)
     }
 
-    private var availableCount: Int { groupNodes.filter(\.alive).count }
+    private var availableCount: Int { groupNodes.filter { $0.alive == true }.count }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -275,7 +291,11 @@ struct ProxyGroupCard: View {
 
     private var currentStatusColor: Color {
         guard let currentNode else { return .secondary }
-        return currentNode.alive ? ProxyDelayColor.color(for: currentNode.delay) : .red
+        switch currentNode.alive {
+        case true: return ProxyDelayColor.color(for: currentNode.delay)
+        case false: return .red
+        case nil: return .secondary
+        }
     }
 
     private func nodeIcon(for name: String) -> String {
@@ -418,7 +438,7 @@ struct ProxyProviderCard: View {
     @State private var showingNodes = false
     let provider: ProxyProvider
 
-    private var availableCount: Int { provider.proxies.filter(\.alive).count }
+    private var availableCount: Int { provider.proxies.filter { $0.alive == true }.count }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -595,9 +615,11 @@ struct ProxyNodeRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Circle()
-                .fill(node.alive ? ProxyDelayColor.color(for: node.delay) : .red)
-                .frame(width: 8, height: 8)
+            StatusSelectionIndicator(
+                statusColor: node.alive == false ? .red : ProxyDelayColor.color(for: node.delay),
+                isSelected: isSelected,
+                isChecking: isLoading
+            )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(node.name)
@@ -612,15 +634,10 @@ struct ProxyNodeRow: View {
             Spacer()
             ProxyDelayBadge(node: node)
 
-            if isLoading {
-                ProgressView().controlSize(.small)
-            } else if isSelected {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.tint)
-            }
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+        .accessibilityValue(isSelected ? "Selected" : "")
     }
 }
 
@@ -629,10 +646,10 @@ struct ProxyDelayBadge: View {
 
     var body: some View {
         Group {
-            if let node, node.alive, node.delay > 0 {
+            if let node, node.alive == true, node.delay > 0 {
                 Text("\(node.delay) ms")
                     .foregroundStyle(ProxyDelayColor.color(for: node.delay))
-            } else if let node, !node.alive {
+            } else if let node, node.alive == false {
                 Text("Unavailable").foregroundStyle(.red)
             } else {
                 Text("Not Tested").foregroundStyle(.secondary)
@@ -649,9 +666,9 @@ struct ProxyHealthBar: View {
     let nodes: [ProxyDetail]
 
     private var buckets: [(count: Int, color: Color)] {
-        let low = nodes.filter { $0.alive && (1...150).contains($0.delay) }.count
-        let medium = nodes.filter { $0.alive && (151...300).contains($0.delay) }.count
-        let high = nodes.filter { $0.alive && $0.delay > 300 }.count
+        let low = nodes.filter { $0.alive == true && (1...150).contains($0.delay) }.count
+        let medium = nodes.filter { $0.alive == true && (151...300).contains($0.delay) }.count
+        let high = nodes.filter { $0.alive == true && $0.delay > 300 }.count
         let unavailable = max(0, nodes.count - low - medium - high)
         return [(low, .green), (medium, .orange), (high, .red), (unavailable, .gray)]
             .filter { $0.count > 0 }

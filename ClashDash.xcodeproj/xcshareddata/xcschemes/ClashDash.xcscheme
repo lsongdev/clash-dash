@@ -35,20 +35,9 @@
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "9D3823EF2D0816F9002FF881"
-               BuildableName = "Clash DashTests.xctest"
-               BlueprintName = "Clash DashTests"
-               ReferencedContainer = "container:ClashDash.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "9D3823F92D0816F9002FF881"
-               BuildableName = "Clash DashUITests.xctest"
-               BlueprintName = "Clash DashUITests"
+               BlueprintIdentifier = "A10000000000000000000004"
+               BuildableName = "ClashDashTests.xctest"
+               BlueprintName = "ClashDashTests"
                ReferencedContainer = "container:ClashDash.xcodeproj">
             </BuildableReference>
          </TestableReference>

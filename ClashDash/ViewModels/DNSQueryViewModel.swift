@@ -43,7 +43,7 @@ class DNSQueryViewModel: ObservableObject {
     func queryDNS(server: ClashServer, domain: String, type: String) {
         guard let request = makeRequest(server: server, domain: domain, type: type) else {
             DispatchQueue.main.async { [weak self] in
-                self?.results = ["无效的请求参数"]
+                self?.results = ["Invalid request parameters"]
             }
             return
         }
@@ -56,29 +56,29 @@ class DNSQueryViewModel: ObservableObject {
                     if let urlError = error as? URLError {
                         switch urlError.code {
                         case .secureConnectionFailed:
-                            self?.results = ["SSL/TLS 连接失败，请检查证书配置"]
+                            self?.results = ["SSL/TLS connection failed. Check the certificate settings."]
                         case .serverCertificateUntrusted:
-                            self?.results = ["服务器证书不受信任"]
+                            self?.results = ["The server certificate is not trusted"]
                         case .clientCertificateRejected:
-                            self?.results = ["客户端证书被拒绝"]
+                            self?.results = ["The client certificate was rejected"]
                         default:
-                            self?.results = ["查询失败: \(error.localizedDescription)"]
+                            self?.results = ["Query failed: \(error.localizedDescription)"]
                         }
                     } else {
-                        self?.results = ["查询失败: \(error.localizedDescription)"]
+                        self?.results = ["Query failed: \(error.localizedDescription)"]
                     }
                     return
                 }
                 
                 if let httpResponse = response as? HTTPURLResponse {
                     if httpResponse.statusCode == 401 {
-                        self?.results = ["认证失败，请检查 Secret"]
+                        self?.results = ["Authentication failed. Check the Secret."]
                         return
                     }
                 }
                 
                 guard let data = data else {
-                    self?.results = ["无响应数据"]
+                    self?.results = ["No response data"]
                     return
                 }
                 
@@ -86,7 +86,7 @@ class DNSQueryViewModel: ObservableObject {
                     let response = try JSONDecoder().decode(DNSResponse.self, from: data)
                     
                     if response.Status != 0 {
-                        self?.results = ["查询失败: 状态码 \(response.Status)"]
+                        self?.results = ["Query failed (status \(response.Status))"]
                         return
                     }
                     
@@ -95,10 +95,10 @@ class DNSQueryViewModel: ObservableObject {
                             "\(answer.data) TTL: \(answer.TTL)"
                         }
                     } else {
-                        self?.results = ["未找到记录"]
+                        self?.results = ["No records found"]
                     }
                 } catch {
-                    self?.results = ["解析失败: \(error.localizedDescription)"]
+                    self?.results = ["Could not parse response: \(error.localizedDescription)"]
                 }
             }
         }.resume()

@@ -164,7 +164,7 @@ struct ConnectionDetailView: View {
                 Text(title)
                     .foregroundColor(.secondary)
                 Spacer()
-                if title == "目标地址" {
+                if title == "Destination Address" {
                     Text(value)
                         .foregroundColor(.primary)
                         .contextMenu {
@@ -172,7 +172,7 @@ struct ConnectionDetailView: View {
                                 UIPasteboard.general.string = value
                                 impactFeedback.impactOccurred()
                             }) {
-                                Label("复制", systemImage: "doc.on.doc")
+                                Label("Copy", systemImage: "doc.on.doc")
                             }
                             
                             Button(action: {
@@ -181,7 +181,7 @@ struct ConnectionDetailView: View {
                                     ipInfoURL = url
                                 }
                             }) {
-                                Label("查看 IP 信息", systemImage: "info.circle")
+                                Label("View IP Information", systemImage: "info.circle")
                             }
                         }
                 } else if copyable {
@@ -192,7 +192,7 @@ struct ConnectionDetailView: View {
                                 UIPasteboard.general.string = value
                                 impactFeedback.impactOccurred()
                             }) {
-                                Label("复制", systemImage: "doc.on.doc")
+                                Label("Copy", systemImage: "doc.on.doc")
                             }
                         }
                 } else {
@@ -208,7 +208,7 @@ struct ConnectionDetailView: View {
             Circle()
                 .fill(isAlive ? Color.green : Color.red)
                 .frame(width: 8, height: 8)
-            Text(isAlive ? "活跃中" : "已断开")
+            Text(isAlive ? "Active" : "Disconnected")
                 .font(.system(.subheadline, design: .rounded))
                 .foregroundColor(isAlive ? .green : .red)
         }
@@ -239,7 +239,7 @@ struct ConnectionDetailView: View {
                 await viewModel.closeConnection(currentConnection.id)
             }
         } label: {
-            Text("打断")
+            Text("Disconnect")
                 .foregroundColor(currentConnection.isAlive ? .red : .gray)
         }
         .disabled(!currentConnection.isAlive)
@@ -250,90 +250,90 @@ struct ConnectionDetailView: View {
             // 状态信息
             Section {
                 HStack {
-                    Text("连接状态")
+                    Text("Connection Status")
                         .foregroundColor(.secondary)
                     Spacer()
                     StatusBadge(isAlive: currentConnection.isAlive)
                 }
                 
-                DetailRow(title: "开始时间", value: formatDate(currentConnection.start))
-                DetailRow(title: "连接时长", value: currentConnection.isAlive ? currentDuration : currentConnection.formattedDuration)
+                DetailRow(title: "Start Time", value: formatDate(currentConnection.start))
+                DetailRow(title: "Duration", value: currentConnection.isAlive ? currentDuration : currentConnection.formattedDuration)
                 
             } header: {
-                Text("基本信息")
+                Text("Basic Information")
             }
             
             // 目标信息
             Section {
-                DetailRow(title: "主机名", value: currentConnection.metadata.host)
-                DetailRow(title: "目标地址", value: currentConnection.metadata.destinationIP)
-                DetailRow(title: "目标端口", value: currentConnection.metadata.destinationPort)
-                DetailRow(title: "目标地理位置", value: formatGeoIP(currentConnection.metadata.destinationGeoIP))
-                DetailRow(title: "目标ASN", value: currentConnection.metadata.destinationIPASN)
+                DetailRow(title: "Host", value: currentConnection.metadata.host)
+                DetailRow(title: "Destination Address", value: currentConnection.metadata.destinationIP)
+                DetailRow(title: "Destination Port", value: currentConnection.metadata.destinationPort)
+                DetailRow(title: "Destination Location", value: formatGeoIP(currentConnection.metadata.destinationGeoIP))
+                DetailRow(title: "Destination ASN", value: currentConnection.metadata.destinationIPASN)
             } header: {
-                Text("目标信息")
+                Text("Destination")
             }
             
             // 来源信息
             Section {
-                DetailRow(title: "来源地址", value: currentConnection.metadata.sourceIP)
-                DetailRow(title: "来源端口", value: currentConnection.metadata.sourcePort)
-                DetailRow(title: "来源地理位置", value: formatSingleGeoIP(currentConnection.metadata.sourceGeoIP))
-                DetailRow(title: "来源ASN", value: currentConnection.metadata.sourceIPASN)
+                DetailRow(title: "Source Address", value: currentConnection.metadata.sourceIP)
+                DetailRow(title: "Source Port", value: currentConnection.metadata.sourcePort)
+                DetailRow(title: "Source Location", value: formatSingleGeoIP(currentConnection.metadata.sourceGeoIP))
+                DetailRow(title: "Source ASN", value: currentConnection.metadata.sourceIPASN)
             } header: {
-                Text("来源信息")
+                Text("Source")
             }
 
             // 流量信息
             Section {
-                DetailRow(title: "上传流量", value: formatBytes(currentConnection.upload))
-                DetailRow(title: "下载流量", value: formatBytes(currentConnection.download))
-                DetailRow(title: "上传速度", value: formatSpeed(currentConnection.uploadSpeed))
-                DetailRow(title: "下载速度", value: formatSpeed(currentConnection.downloadSpeed))
+                DetailRow(title: "Upload", value: formatBytes(currentConnection.upload))
+                DetailRow(title: "Download", value: formatBytes(currentConnection.download))
+                DetailRow(title: "Upload Speed", value: formatSpeed(currentConnection.uploadSpeed))
+                DetailRow(title: "Download Speed", value: formatSpeed(currentConnection.downloadSpeed))
             } header: {
-                Text("流量统计")
+                Text("Traffic")
             }
             
             // 规则信息
             Section {
-                DetailRow(title: "规则类型", value: currentConnection.rule)
-                DetailRow(title: "规则内容", value: currentConnection.rulePayload)
-                DetailRow(title: "代理链", value: currentConnection.chains.isEmpty ? "N/A" : currentConnection.chains.joined(separator: " → "))
+                DetailRow(title: "Rule Type", value: currentConnection.rule)
+                DetailRow(title: "Rule Payload", value: currentConnection.rulePayload)
+                DetailRow(title: "Proxy Chain", value: currentConnection.chains.isEmpty ? "N/A" : currentConnection.chains.joined(separator: " → "))
             } header: {
-                Text("规则信息")
+                Text("Rule")
             }
             
             // 入站信息
             Section {
-                DetailRow(title: "入站类型", value: currentConnection.metadata.type)
-                DetailRow(title: "入站地址", value: currentConnection.metadata.inboundIP)
-                DetailRow(title: "入站端口", value: currentConnection.metadata.inboundPort)
-                DetailRow(title: "入站名称", value: currentConnection.metadata.inboundName)
-                DetailRow(title: "入站用户", value: currentConnection.metadata.inboundUser)
+                DetailRow(title: "Inbound Type", value: currentConnection.metadata.type)
+                DetailRow(title: "Inbound Address", value: currentConnection.metadata.inboundIP)
+                DetailRow(title: "Inbound Port", value: currentConnection.metadata.inboundPort)
+                DetailRow(title: "Inbound Name", value: currentConnection.metadata.inboundName)
+                DetailRow(title: "Inbound User", value: currentConnection.metadata.inboundUser)
             } header: {
-                Text("入站信息")
+                Text("Inbound")
             }
             
             
             
             // 其他信息
             Section {
-                DetailRow(title: "连接ID", value: currentConnection.id)
-                DetailRow(title: "网络类型", value: currentConnection.metadata.network.uppercased())
-                DetailRow(title: "DNS模式", value: currentConnection.metadata.dnsMode)
-                DetailRow(title: "进程名", value: currentConnection.metadata.process)
-                DetailRow(title: "进程路径", value: currentConnection.metadata.processPath)
+                DetailRow(title: "Connection ID", value: currentConnection.id)
+                DetailRow(title: "Network Type", value: currentConnection.metadata.network.uppercased())
+                DetailRow(title: "DNS Mode", value: currentConnection.metadata.dnsMode)
+                DetailRow(title: "Process Name", value: currentConnection.metadata.process)
+                DetailRow(title: "Process Path", value: currentConnection.metadata.processPath)
                 DetailRow(title: "UID", value: currentConnection.metadata.uid.map(String.init) ?? "0")
                 DetailRow(title: "DSCP", value: currentConnection.metadata.dscp.map(String.init) ?? "0")
             } header: {
-                Text("其他信息")
+                Text("Other Information")
             }
         }
-        .navigationTitle("连接详情")
+        .navigationTitle("Connection Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button("关闭") {
+                Button("Close") {
                     cleanup()
                     dismiss()
                 }

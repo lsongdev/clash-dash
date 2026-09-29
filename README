@@ -1,2 +1,42 @@
 
-fork from <https://github.com/bin64/Clash-Dash>
+# ClashDash
+
+ClashDash is an iOS dashboard for a Clash-compatible controller. Connect to a controller on your network to monitor traffic, inspect connections and rules, and manage proxy groups.
+
+## Features
+
+- Live download, upload, memory, and connection statistics with animated values and separate traffic charts.
+- Proxy groups and providers, including provider-only nodes, with latency testing and selection.
+- Rule and rule-provider lists.
+- Connection details, logs, DNS lookup, and controller settings.
+- Multiple saved servers with connection status and a consistent selection indicator.
+
+## Requirements
+
+- Xcode 16 or later and an iPhone running iOS 17.6 or later.
+- A reachable Clash-compatible controller with its external-controller address, port, and Secret.
+
+## Run
+
+1. Open `ClashDash.xcodeproj` in Xcode.
+2. Select the `ClashDash` scheme and your iPhone as the destination.
+3. Configure a development team for signing, then build and run.
+4. Add a server in the server picker using the controller address, port, and Secret.
+
+The app sends requests to the controller endpoints for proxies, proxy providers, rules, rule providers, version, and latency tests. It also uses WebSocket streams for live traffic, memory, connections, and logs.
+
+## Tests
+
+Run the `ClashDash` scheme's tests in Xcode, or use:
+
+```sh
+xcodebuild -project ClashDash.xcodeproj -scheme ClashDash \
+  -destination 'platform=iOS Simulator,name=iPhone Air' \
+  CODE_SIGNING_ALLOWED=NO test
+```
+
+The API tests use mocked HTTP responses, so they do not require a live controller.
+
+## Credits
+
+Forked from [bin64/Clash-Dash](https://github.com/bin64/Clash-Dash). The current App Icon was generated for this fork.

@@ -8,11 +8,17 @@ struct RulesTab: View {
     
     @State var rules: [Rule] = []
     @State var providers: [RuleProvider] = []
+    @State private var loadError: String?
     
     var body: some View {
         List {
+            if let loadError {
+                Label(loadError, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
             Section("Rules") {
-                ForEach(rules) { rule in
+                ForEach(Array(rules.enumerated()), id: \.offset) { _, rule in
                     ruleRowView(rule: rule)
                 }
             }
@@ -58,22 +64,32 @@ struct RulesTab: View {
         guard requestedServer.isValid else {
             rules = []
             providers = []
+            loadError = "Select a valid server first."
             return
         }
+        rules = []
+        providers = []
+        loadError = nil
+        var errors: [String] = []
         do {
-            async let fetchedRules = appManager.api.fetchRules(server: requestedServer)
-            async let fetchedProviders = appManager.api.fetchRuleProviders(server: requestedServer)
-            let (newRules, newProviders) = try await (fetchedRules, fetchedProviders)
+            let newRules = try await appManager.api.fetchRules(server: requestedServer)
             guard appManager.currentServer.connectionIdentifier == requestedServer.connectionIdentifier else { return }
             rules = newRules
+        } catch is CancellationError {
+            return
+        } catch {
+            errors.append("Rules: \(error.localizedDescription)")
+        }
+        do {
+            let newProviders = try await appManager.api.fetchRuleProviders(server: requestedServer)
+            guard appManager.currentServer.connectionIdentifier == requestedServer.connectionIdentifier else { return }
             providers = newProviders
         } catch is CancellationError {
-            // 切换服务器时忽略旧请求结果。
+            return
         } catch {
-            guard appManager.currentServer.connectionIdentifier == requestedServer.connectionIdentifier else { return }
-            rules = []
-            providers = []
-            print(error)
+            errors.append("Rule providers: \(error.localizedDescription)")
         }
+        guard appManager.currentServer.connectionIdentifier == requestedServer.connectionIdentifier else { return }
+        loadError = errors.isEmpty ? nil : errors.joined(separator: "\n")
     }
 }
