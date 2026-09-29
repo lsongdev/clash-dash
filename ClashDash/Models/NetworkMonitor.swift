@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import WidgetKit
 
 class NetworkMonitor: ObservableObject {
     @Published var uploadSpeed: String = "0 B/s"
@@ -20,6 +21,11 @@ class NetworkMonitor: ObservableObject {
     private var isMonitoring = false
     private var isViewActive = false
     private var activeView: String = ""
+    private var widgetDownload: Int?
+    private var widgetUpload: Int?
+    private var widgetConnections: Int?
+    private var lastWidgetWrite = Date.distantPast
+    private var lastWidgetReload = Date.distantPast
     
     private enum ConnectionType: String {
         case traffic = "Traffic"
@@ -78,6 +84,10 @@ class NetworkMonitor: ObservableObject {
         
         isConnected.removeAll()
         server = nil
+        widgetDownload = nil
+        widgetUpload = nil
+        widgetConnections = nil
+        lastWidgetWrite = .distantPast
     }
     
     private func getWebSocketURL(for path: String, server: ClashServer) -> URL? {
@@ -257,6 +267,9 @@ class NetworkMonitor: ObservableObject {
             // 更新速度显示
             self.uploadSpeed = formatSpeed(traffic.up)
             self.downloadSpeed = formatSpeed(traffic.down)
+            self.widgetUpload = traffic.up
+            self.widgetDownload = traffic.down
+            self.publishWidgetMetricsIfNeeded()
             
             // 创建新记录
             let record = SpeedRecord(
@@ -325,6 +338,8 @@ class NetworkMonitor: ObservableObject {
                 self?.activeConnections = connections.connections.count
                 self?.totalUpload = self?.formatBytes(connections.uploadTotal) ?? "0 MB"
                 self?.totalDownload = self?.formatBytes(connections.downloadTotal) ?? "0 MB"
+                self?.widgetConnections = connections.connections.count
+                self?.publishWidgetMetricsIfNeeded()
             }
         } catch {
             print("解析连接数据失败: \(error)")
@@ -342,6 +357,25 @@ class NetworkMonitor: ObservableObject {
                     print("    未知解码错误")
                 }
             }
+        }
+    }
+
+    private func publishWidgetMetricsIfNeeded() {
+        guard let server, Date().timeIntervalSince(lastWidgetWrite) >= 5 else { return }
+        let now = Date()
+        WidgetStore.saveMetrics(
+            WidgetMetrics(
+                serverID: server.id,
+                timestamp: now,
+                downloadBytesPerSecond: widgetDownload,
+                uploadBytesPerSecond: widgetUpload,
+                activeConnections: widgetConnections
+            )
+        )
+        lastWidgetWrite = now
+        if now.timeIntervalSince(lastWidgetReload) >= 60 {
+            WidgetCenter.shared.reloadTimelines(ofKind: WidgetStore.kind)
+            lastWidgetReload = now
         }
     }
     

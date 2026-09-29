@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		97859C962D1477C7004CE49F /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 97859C952D1477C7004CE49F /* WidgetKit.framework */; };
+		A1000000000000000000000B /* WidgetSharedData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000C /* WidgetSharedData.swift */; };
 		97859C982D1477C7004CE49F /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 97859C972D1477C7004CE49F /* SwiftUI.framework */; };
 		97859CA92D1477C9004CE49F /* ClashDashWeigetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 97859C932D1477C7004CE49F /* ClashDashWeigetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
@@ -47,6 +48,7 @@
 		97859C932D1477C7004CE49F /* ClashDashWeigetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClashDashWeigetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		97859C952D1477C7004CE49F /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		97859C972D1477C7004CE49F /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		A1000000000000000000000C /* WidgetSharedData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClashDash/Models/WidgetSharedData.swift; sourceTree = SOURCE_ROOT; };
 		9D3823E02D0816F7002FF881 /* ClashDash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClashDash.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000001 /* ClashDashTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClashDashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -288,6 +290,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1000000000000000000000B /* WidgetSharedData.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -356,15 +359,15 @@
 				DEVELOPMENT_TEAM = 2ZHWSJ25BU;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ClashDashWeiget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = ClashDashWeiget;
+			INFOPLIST_KEY_CFBundleDisplayName = "Clash Dash Widget";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+			IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+			MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.lsong.clashdash.ClashDashWeiget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -386,15 +389,15 @@
 				DEVELOPMENT_TEAM = 2ZHWSJ25BU;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ClashDashWeiget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = ClashDashWeiget;
+			INFOPLIST_KEY_CFBundleDisplayName = "Clash Dash Widget";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+			IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+			MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.lsong.clashdash.ClashDashWeiget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

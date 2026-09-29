@@ -10,6 +10,7 @@ ClashDash is an iOS dashboard for a Clash-compatible controller. Connect to a co
 - Rule and rule-provider lists.
 - Connection details, logs, DNS lookup, and controller settings.
 - Multiple saved servers with connection status and a consistent selection indicator.
+- Small and medium Home Screen widgets for download speed, upload speed, and active connections. Widgets refresh from the selected controller on the system's schedule and show the last update when it is unreachable.
 
 ## Requirements
 
@@ -24,6 +25,10 @@ ClashDash is an iOS dashboard for a Clash-compatible controller. Connect to a co
 4. Add a server in the server picker using the controller address, port, and Secret.
 
 The app sends requests to the controller endpoints for proxies, proxy providers, rules, rule providers, version, and latency tests. It also uses WebSocket streams for live traffic, memory, connections, and logs.
+
+## Home Screen widgets
+
+After selecting a server in the app, add the small or medium Clash Dash widget from the Home Screen widget gallery. The widget requests traffic and connection data from that controller when iOS refreshes it. If the controller is unreachable, it shows the last saved readings with their age rather than displaying fabricated zeroes. Widget refresh timing is controlled by iOS, so it is not a continuous live monitor.
 
 ## Tests
 

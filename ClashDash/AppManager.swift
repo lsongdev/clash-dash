@@ -6,6 +6,7 @@
 
 import Foundation
 import SwiftUI
+import WidgetKit
 
 // MARK: - App Manager
 @MainActor
@@ -44,6 +45,7 @@ final class AppManager: ObservableObject {
     init() {
         loadServers()
         loadCurrentServer()
+        syncWidgetServer()
         Task {
             await checkAllServersStatus()
         }
@@ -229,12 +231,30 @@ final class AppManager: ObservableObject {
         if let encoded = try? JSONEncoder().encode(currentServer) {
             defaults.set(encoded, forKey: Self.currentServerKey)
         }
+        syncWidgetServer()
     }
 
     private func clearCurrentServerSelection() {
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: Self.currentServerIDKey)
         defaults.removeObject(forKey: Self.currentServerKey)
+        syncWidgetServer()
+    }
+
+    private func syncWidgetServer() {
+        if currentServer.isValid {
+            WidgetStore.saveServer(
+                WidgetServerConfiguration(
+                    id: currentServer.id,
+                    name: currentServer.displayName,
+                    baseURL: currentServer.url,
+                    secret: currentServer.secret
+                )
+            )
+        } else {
+            WidgetStore.saveServer(nil)
+        }
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetStore.kind)
     }
 }
 
