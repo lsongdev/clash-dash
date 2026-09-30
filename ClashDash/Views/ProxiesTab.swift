@@ -474,31 +474,31 @@ struct ProxyProviderCard: View {
 
             if let trafficInfo {
                 VStack(alignment: .leading, spacing: 8) {
-                    HStack {
+                    HStack(spacing: 8) {
                         Label("Subscription Usage", systemImage: "chart.bar.fill")
                             .font(.caption.weight(.medium))
                         Spacer()
+                        Text("\(trafficInfo.used) of \(trafficInfo.total)")
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                    }
+
+                    HStack(spacing: 8) {
+                        GeometryReader { geometry in
+                            let progress = min(max(trafficInfo.percentage / 100, 0), 1)
+                            Capsule()
+                                .fill(trafficColor(trafficInfo.percentage).gradient)
+                                .frame(width: geometry.size.width * progress)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .frame(height: 4)
+
                         Text(String(format: "%.1f%%", trafficInfo.percentage))
-                            .font(.caption.monospacedDigit().weight(.semibold))
+                            .font(.caption2.monospacedDigit().weight(.semibold))
                             .foregroundStyle(trafficColor(trafficInfo.percentage))
                     }
-
-                    GeometryReader { geometry in
-                        let progress = min(max(trafficInfo.percentage / 100, 0), 1)
-                        Capsule()
-                            .fill(trafficColor(trafficInfo.percentage).gradient)
-                            .frame(width: geometry.size.width * progress)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .frame(height: 4)
-
-                    HStack {
-                        Text("Used \(trafficInfo.used)")
-                        Spacer()
-                        Text("Total \(trafficInfo.total)")
-                    }
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.secondary)
                 }
             } else {
                 Label("Subscription usage unavailable", systemImage: "chart.bar.xaxis")
