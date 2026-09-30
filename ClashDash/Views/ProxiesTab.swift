@@ -478,27 +478,19 @@ struct ProxyProviderCard: View {
                         Label("Subscription Usage", systemImage: "chart.bar.fill")
                             .font(.caption.weight(.medium))
                         Spacer()
-                        Text("\(trafficInfo.used) of \(trafficInfo.total)")
-                            .font(.caption2.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
-                    }
-
-                    HStack(spacing: 8) {
-                        GeometryReader { geometry in
-                            let progress = min(max(trafficInfo.percentage / 100, 0), 1)
-                            Capsule()
-                                .fill(trafficColor(trafficInfo.percentage).gradient)
-                                .frame(width: geometry.size.width * progress)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .frame(height: 4)
-
                         Text(String(format: "%.1f%%", trafficInfo.percentage))
-                            .font(.caption2.monospacedDigit().weight(.semibold))
+                            .font(.caption.monospacedDigit().weight(.semibold))
                             .foregroundStyle(trafficColor(trafficInfo.percentage))
                     }
+
+                    GeometryReader { geometry in
+                        let progress = min(max(trafficInfo.percentage / 100, 0), 1)
+                        Capsule()
+                            .fill(trafficColor(trafficInfo.percentage).gradient)
+                            .frame(width: geometry.size.width * progress)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(height: 4)
                 }
             } else {
                 Label("Subscription usage unavailable", systemImage: "chart.bar.xaxis")
@@ -508,9 +500,22 @@ struct ProxyProviderCard: View {
             }
 
             if let expirationDate {
-                Label("Expires \(expirationDate)", systemImage: "calendar")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    Label("Expires \(expirationDate)", systemImage: "calendar")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Spacer(minLength: 4)
+                    if let trafficInfo {
+                        subscriptionUsageSummary(trafficInfo)
+                    }
+                }
+            } else if let trafficInfo {
+                HStack {
+                    Spacer(minLength: 0)
+                    subscriptionUsageSummary(trafficInfo)
+                }
             }
 
         }
@@ -558,6 +563,14 @@ struct ProxyProviderCard: View {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .binary
         return formatter.string(fromByteCount: bytes)
+    }
+
+    private func subscriptionUsageSummary(_ trafficInfo: (used: String, total: String, percentage: Double)) -> some View {
+        Text("\(trafficInfo.used) of \(trafficInfo.total)")
+            .font(.caption2.monospacedDigit())
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
     }
 
     private func trafficColor(_ percentage: Double) -> Color {
