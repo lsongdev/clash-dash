@@ -7,20 +7,21 @@
 
 import Foundation
 
-struct Rule: Codable, Identifiable, Hashable {
+struct Rule: Identifiable, Hashable {
+    let id: Int
     let type: String
     let payload: String
     let proxy: String
-    let size: Int?  // 改为可选类型，适配原版 Clash 内核
-    
-    var id: String { "\(type)-\(payload)-\(proxy)" }
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-    
-    static func == (lhs: Rule, rhs: Rule) -> Bool {
-        lhs.id == rhs.id
+    let size: Int?
+    var isDisabled: Bool
+
+    func recordCount(in providers: [RuleProvider]) -> Int? {
+        if let size, size >= 0 { return size }
+        let normalizedType = type.uppercased().replacingOccurrences(of: "-", with: "")
+        guard normalizedType == "RULESET",
+              let count = providers.first(where: { $0.name == payload })?.ruleCount,
+              count >= 0 else { return nil }
+        return count
     }
     
     var sectionKey: String {
@@ -52,8 +53,21 @@ struct RuleProvider: Codable, Identifiable {
 
 
 // Response models
-struct RulesResponse: Codable {
-    let rules: [Rule]
+private struct RulesResponse: Decodable {
+    let rules: [RuleResponseItem]
+}
+
+private struct RuleResponseItem: Decodable {
+    let index: Int?
+    let type: String
+    let payload: String
+    let proxy: String
+    let size: Int?
+    let extra: Extra?
+
+    struct Extra: Decodable {
+        let disabled: Bool?
+    }
 }
 
 struct ProxyDetail: Codable, Identifiable {
@@ -119,6 +133,10 @@ struct ProxyProvider: Codable {
     let testUrl: String?
     let subscriptionInfo: SubscriptionInfo?
     let updatedAt: String?
+
+    var canRefresh: Bool {
+        vehicleType.caseInsensitiveCompare("HTTP") == .orderedSame
+    }
 }
 
 struct SubscriptionInfo: Codable {
@@ -215,7 +233,23 @@ class ClashAPI: NSObject, URLSessionDelegate, URLSessionTaskDelegate {
         let (data, response) = try await session.data(for: request)
         try validate(response)
         let res = try JSONDecoder().decode(RulesResponse.self, from: data)
-        return res.rules
+        return res.rules.enumerated().map { offset, item in
+            Rule(
+                id: item.index ?? offset,
+                type: item.type,
+                payload: item.payload,
+                proxy: item.proxy,
+                size: item.size,
+                isDisabled: item.extra?.disabled ?? false
+            )
+        }
+    }
+
+    func setRuleDisabled(server: ClashServer, ruleIndex: Int, disabled: Bool) async throws {
+        var request = server.makeRequest(path: "rules/disable", method: "PATCH")
+        request.httpBody = try JSONEncoder().encode([String(ruleIndex): disabled])
+        let (_, response) = try await session.data(for: request)
+        try validate(response)
     }
     
     func fetchRuleProviders(server: ClashServer) async throws -> [RuleProvider] {
@@ -309,6 +343,14 @@ class ClashAPI: NSObject, URLSessionDelegate, URLSessionTaskDelegate {
             return provider
         }
         return providers.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    func refreshProxyProvider(server: ClashServer, name: String) async throws {
+        let url = try apiURL(server: server, pathSegments: ["providers", "proxies", name])
+        var request = server.makeRequest(path: "providers/proxies", method: "PUT")
+        request.url = url
+        let (_, response) = try await session.data(for: request)
+        try validate(response)
     }
     
     func refreshRulesProvider(server: ClashServer, name: String) async throws {

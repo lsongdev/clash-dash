@@ -92,6 +92,75 @@ final class ClashAPITests: XCTestCase {
         XCTAssertEqual(providers.first?.ruleCount, 42)
     }
 
+    func testRulesPreserveServerIndicesAndDisabledState() async throws {
+        MockURLProtocol.handler = { _ in
+            (200, """
+            {"rules":[
+              {"index":7,"type":"DOMAIN-SUFFIX","payload":"example.com","proxy":"Proxy","extra":{"disabled":true}},
+              {"index":12,"type":"MATCH","payload":"","proxy":"DIRECT","extra":{"disabled":false}}
+            ]}
+            """)
+        }
+        let rules = try await api.fetchRules(server: server)
+        XCTAssertEqual(rules.map(\.id), [7, 12])
+        XCTAssertEqual(rules.map(\.isDisabled), [true, false])
+    }
+
+    func testRuleRecordCountsHideSentinelsAndResolveRuleSetProviders() async throws {
+        MockURLProtocol.handler = { request in
+            switch request.url?.path {
+            case "/rules":
+                return (200, """
+                {"rules":[
+                  {"type":"DOMAIN-SUFFIX","payload":"example.com","proxy":"Proxy","size":-1},
+                  {"type":"RuleSet","payload":"social","proxy":"Social","size":-1},
+                  {"type":"RULE-SET","payload":"missing","proxy":"Proxy","size":-1},
+                  {"type":"GEOSITE","payload":"empty","proxy":"Proxy","size":0},
+                  {"type":"GEOSITE","payload":"test","proxy":"Proxy","size":12},
+                  {"type":"RULE-SET","payload":"unknown","proxy":"Proxy","size":-1}
+                ]}
+                """)
+            case "/providers/rules":
+                return (200, """
+                {"providers":{
+                  "social":{"name":"social","behavior":"domain","type":"Rule","ruleCount":42,"updatedAt":"2026-09-29T00:00:00Z","vehicleType":"HTTP"},
+                  "unknown":{"name":"unknown","behavior":"domain","type":"Rule","ruleCount":-1,"updatedAt":"2026-09-29T00:00:00Z","vehicleType":"HTTP"}
+                }}
+                """)
+            default:
+                XCTFail("Unexpected request")
+                return (404, "{}")
+            }
+        }
+        let rules = try await api.fetchRules(server: server)
+        let providers = try await api.fetchRuleProviders(server: server)
+        XCTAssertEqual(rules[0].size, -1)
+        XCTAssertEqual(rules.map { $0.recordCount(in: providers) }, [nil, 42, nil, 0, 12, nil])
+    }
+
+    func testSetRuleDisabledUsesPatchAndOriginalServerIndex() async throws {
+        MockURLProtocol.handler = { request in
+            XCTAssertEqual(request.httpMethod, "PATCH")
+            XCTAssertEqual(request.url?.path, "/rules/disable")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-secret")
+            var data = request.httpBody ?? Data()
+            if data.isEmpty, let stream = request.httpBodyStream {
+                stream.open()
+                defer { stream.close() }
+                var buffer = [UInt8](repeating: 0, count: 1024)
+                while stream.hasBytesAvailable {
+                    let count = stream.read(&buffer, maxLength: buffer.count)
+                    if count <= 0 { break }
+                    data.append(contentsOf: buffer.prefix(count))
+                }
+            }
+            let body = try? JSONSerialization.jsonObject(with: data) as? [String: Bool]
+            XCTAssertEqual(body, ["12": true])
+            return (204, "")
+        }
+        try await api.setRuleDisabled(server: server, ruleIndex: 12, disabled: true)
+    }
+
     func testSelectProxyEncodesGroupPathAndBody() async throws {
         MockURLProtocol.handler = { request in
             XCTAssertEqual(request.httpMethod, "PUT")
@@ -173,13 +242,41 @@ final class ClashAPITests: XCTestCase {
             return (200, """
             {"providers":{
               "default":{"name":"default","type":"Proxy","vehicleType":"Compatible","proxies":[]},
+              "cf":{"name":"cf","type":"Proxy","vehicleType":"HTTP","proxies":[]},
               "shaoshuren":{"name":"shaoshuren","type":"Proxy","vehicleType":"HTTP","proxies":[]},
               "local":{"name":"local","type":"Proxy","vehicleType":"File","proxies":[]}
             }}
             """)
         }
         let providers = try await api.fetchProxyProviders(server: server)
-        XCTAssertEqual(providers.map(\.name), ["local", "shaoshuren"])
+        XCTAssertEqual(providers.map(\.name), ["cf", "local", "shaoshuren"])
+        let cf = try XCTUnwrap(providers.first { $0.name == "cf" })
+        XCTAssertNil(cf.subscriptionInfo)
+        XCTAssertTrue(cf.canRefresh)
+        XCTAssertFalse(try XCTUnwrap(providers.first { $0.name == "local" }).canRefresh)
+    }
+
+    func testRefreshProxyProviderUsesEncodedProviderPathAndAuthorization() async throws {
+        MockURLProtocol.handler = { request in
+            XCTAssertEqual(request.httpMethod, "PUT")
+            XCTAssertEqual(request.url?.path, "/providers/proxies/cf/自动 更新")
+            XCTAssertTrue(request.url?.absoluteString.contains("cf%2F") == true)
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-secret")
+            return (204, "")
+        }
+        try await api.refreshProxyProvider(server: server, name: "cf/自动 更新")
+    }
+
+    func testRefreshProxyProviderRejectsUnauthorizedResponse() async {
+        MockURLProtocol.handler = { _ in (401, "{}") }
+        do {
+            try await api.refreshProxyProvider(server: server, name: "cf")
+            XCTFail("Expected unauthorized error")
+        } catch NetworkError.unauthorized {
+            // Expected.
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
     }
 
     func testFetchRejectsUnauthorizedResponseBeforeDecoding() async {

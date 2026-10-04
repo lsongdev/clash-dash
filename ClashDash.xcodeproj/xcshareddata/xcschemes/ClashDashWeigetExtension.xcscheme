@@ -64,7 +64,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "97859C922D1477C7004CE49F"
             BuildableName = "ClashDashWeigetExtension.appex"
-            BlueprintName = "ClashDashWeigetExtension"
             ReferencedContainer = "container:ClashDash.xcodeproj">
          </BuildableReference>
       </RemoteRunnable>

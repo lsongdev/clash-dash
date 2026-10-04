@@ -101,7 +101,12 @@ struct ProxiesTab: View {
             if !providers.isEmpty {
                 Section("Proxy Providers") {
                     ForEach(providers, id: \.name) { provider in
-                        ProxyProviderCard(provider: provider)
+                        ProxyProviderCard(provider: provider) {
+                            let requestedServer = server
+                            try await appManager.api.refreshProxyProvider(server: requestedServer, name: provider.name)
+                            guard server.connectionIdentifier == requestedServer.connectionIdentifier else { return }
+                            await loadData(showLoading: false)
+                        }
                             .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
@@ -436,41 +441,44 @@ struct ProxySelectorView: View {
 
 struct ProxyProviderCard: View {
     @State private var showingNodes = false
+    @State private var isRefreshing = false
+    @State private var refreshError: String?
     let provider: ProxyProvider
-
-    private var availableCount: Int { provider.proxies.filter { $0.alive == true }.count }
+    let onRefresh: () async throws -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Button { showingNodes = true } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "shippingbox")
-                        .foregroundStyle(.tint)
-                        .frame(width: 24)
+            HStack(alignment: .center, spacing: 8) {
+                Image(systemName: "shippingbox")
+                    .foregroundStyle(.tint)
+                    .frame(width: 22)
+                    .padding(.top, 2)
 
-                    VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
                         Text(provider.name)
                             .font(.headline)
                             .foregroundStyle(.primary)
                             .lineLimit(1)
-                        Text("\(provider.proxies.count) nodes · \(availableCount) available · \(relativeUpdateTime)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
 
-                    Spacer()
-                    Text(provider.vehicleType)
-                        .font(.caption2.weight(.medium))
+                        Text(provider.vehicleType)
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(.quaternary, in: Capsule())
+                            .fixedSize()
+                        Spacer(minLength: 4)
+                    }
+                    Text(relativeUpdateTime)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.tertiary)
+                }
+
+                if provider.canRefresh {
+                    refreshButton
                 }
             }
-            .buttonStyle(.plain)
-
-            ProxyHealthBar(nodes: provider.proxies)
 
             if let trafficInfo {
                 VStack(alignment: .leading, spacing: 8) {
@@ -490,13 +498,9 @@ struct ProxyProviderCard: View {
                             .frame(width: geometry.size.width * progress)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .frame(height: 4)
+                    .frame(height: 5)
+                    .background(Color(.systemGray5), in: Capsule())
                 }
-            } else {
-                Label("Subscription usage unavailable", systemImage: "chart.bar.xaxis")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             if let expirationDate {
@@ -518,6 +522,35 @@ struct ProxyProviderCard: View {
                 }
             }
 
+            Button { showingNodes = true } label: {
+                VStack(alignment: .leading, spacing: 12) {
+                    ProxyHealthBar(nodes: provider.proxies)
+
+                    HStack(spacing: 8) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "point.3.connected.trianglepath.dotted")
+                            Text("\(provider.proxies.count) nodes")
+                        }
+                        HStack(spacing: 3) {
+                            Image(systemName: "checkmark.circle")
+                            Text("\(availableCount) available")
+                        }
+                        Spacer(minLength: 4)
+                        Text("View nodes")
+                        Image(systemName: "chevron.right")
+                            .font(.caption2.weight(.semibold))
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(provider.name): \(provider.proxies.count) nodes, \(availableCount) available. View nodes")
         }
         .padding(14)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
@@ -530,6 +563,47 @@ struct ProxyProviderCard: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .alert("Unable to Refresh Provider", isPresented: Binding(
+            get: { refreshError != nil },
+            set: { if !$0 { refreshError = nil } }
+        )) {
+            Button("OK", role: .cancel) { refreshError = nil }
+        } message: {
+            Text(refreshError ?? "Please try again.")
+        }
+    }
+
+    private var availableCount: Int {
+        provider.proxies.filter { $0.alive == true }.count
+    }
+
+    private var refreshButton: some View {
+        Button {
+            Task {
+                isRefreshing = true
+                defer { isRefreshing = false }
+                do {
+                    try await onRefresh()
+                } catch {
+                    refreshError = error.localizedDescription
+                }
+            }
+        } label: {
+            Group {
+                if isRefreshing {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.tint)
+                }
+            }
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isRefreshing)
+        .accessibilityLabel("Refresh \(provider.name) provider")
     }
 
     private var trafficInfo: (used: String, total: String, percentage: Double)? {
@@ -577,6 +651,46 @@ struct ProxyProviderCard: View {
         if percentage < 70 { return .green }
         if percentage < 90 { return .orange }
         return .red
+    }
+}
+
+struct ProxyProviderStatusSummary: View {
+    let nodes: [ProxyDetail]
+
+    private var availableCount: Int { nodes.filter { $0.alive == true }.count }
+    private var unavailableCount: Int { nodes.filter { $0.alive == false }.count }
+    private var untestedCount: Int { nodes.filter { $0.alive == nil }.count }
+
+    var body: some View {
+        HStack(spacing: 14) {
+            statusItem(count: availableCount, title: "available", color: .green)
+
+            if unavailableCount > 0 {
+                statusItem(count: unavailableCount, title: "down", color: .red)
+            }
+
+            if untestedCount > 0 {
+                statusItem(count: untestedCount, title: "untested", color: .gray)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .font(.caption.monospacedDigit())
+        .foregroundStyle(.secondary)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "\(availableCount) available, \(unavailableCount) unavailable, \(untestedCount) untested"
+        )
+    }
+
+    private func statusItem(count: Int, title: String, color: Color) -> some View {
+        HStack(spacing: 5) {
+            Circle()
+                .fill(color)
+                .frame(width: 7, height: 7)
+            Text("\(count) \(title)")
+                .lineLimit(1)
+        }
     }
 }
 
