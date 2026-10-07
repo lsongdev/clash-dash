@@ -2,9 +2,11 @@ import SwiftUI
 
 struct ServerFormView: View {
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var appManager = AppManager.shared
     
     @State var server: ClashServer = ClashServer()
     let onSave: (ClashServer) -> Void
+    var allowsDemo: Bool = true
       
     var body: some View {
         NavigationStack {
@@ -27,6 +29,21 @@ struct ServerFormView: View {
                             Image(systemName: "lock.fill")
                                 .foregroundColor(server.useSSL ? .green : .secondary)
                         }
+                    }
+                }
+
+                if allowsDemo && !appManager.servers.contains(where: \.isDemo) {
+                    Section {
+                        Button {
+                            guard appManager.demoServer.status == .ok else { return }
+                            appManager.addDemoServer()
+                            dismiss()
+                        } label: {
+                            Label("No server? Try a demo server", systemImage: "play.circle")
+                        }
+                        .disabled(appManager.demoServer.status != .ok)
+                    } footer: {
+                        Text(appManager.demoServer.errorMessage ?? "Explore the app with fictional data. No server setup required.")
                     }
                 }
             }

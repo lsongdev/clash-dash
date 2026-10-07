@@ -1,6 +1,10 @@
 import SwiftUI
 
 struct ClashServer: Identifiable, Codable, Hashable {
+    static let demo = ClashServer(id: UUID(uuidString: "DE000000-0000-0000-0000-000000000001")!, name: "Demo Server", host: "127.0.0.1", port: "0", status: .unknown, version: "Local Demo")
+    /// Changes when a local listener is recreated, even if its port is reused.
+    var connectionGeneration: UUID?
+    var isDemo: Bool { id == Self.demo.id }
     var id: UUID = UUID()
     var name: String = ""
     var host: String = ""
@@ -21,13 +25,14 @@ struct ClashServer: Identifiable, Codable, Hashable {
     }
 
     var endpointDescription: String {
+        if isDemo { return "localhost:\(port) · Simulated data" }
         let scheme = useSSL ? "https" : "http"
         return "\(scheme)://\(host):\(port)"
     }
 
     /// 仅在连接参数变化时改变，避免状态刷新触发页面重复重连。
     var connectionIdentifier: String {
-        "\(id.uuidString)|\(host)|\(port)|\(useSSL)|\(secret)"
+        "\(id.uuidString)|\(host)|\(port)|\(useSSL)|\(secret)|\(connectionGeneration?.uuidString ?? "")"
     }
     
     var url: URL {

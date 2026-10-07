@@ -463,12 +463,11 @@ struct AboutView: View {
         List {
             Section {
                 HStack(spacing: 16) {
-                    Image(systemName: "cat.fill")
+                    Image("ApplicationIcon")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 60, height: 60)
                         .cornerRadius(12)
-                        .foregroundColor(appManager.appTintColor.getColor())
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(appManager.appName)

@@ -182,6 +182,7 @@ class ConnectionsViewModel: ObservableObject {
             do {
                 let session = URLSession(configuration: sessionConfig)
                 let (_, response) = try await session.data(for: testRequest)
+                guard isMonitoring, self.server?.connectionIdentifier == server.connectionIdentifier else { return }
                 
                 if let httpResponse = response as? HTTPURLResponse {
                     log("✅ HTTP 连接测试状态码: \(httpResponse.statusCode)")
@@ -216,6 +217,7 @@ class ConnectionsViewModel: ObservableObject {
                 receiveConnectionsData()
                 
             } catch {
+                guard isMonitoring, self.server?.connectionIdentifier == server.connectionIdentifier else { return }
                 log("❌ HTTP 连接测试失败: \(error.localizedDescription)")
                 handleConnectionError(error)
             }
@@ -256,7 +258,7 @@ class ConnectionsViewModel: ObservableObject {
         guard let task = connectionsTask, isMonitoring else { return }
         
         task.receive { [weak self] result in
-            guard let self = self, self.isMonitoring else { return }
+            guard let self = self, self.isMonitoring, self.connectionsTask === task else { return }
             
             switch result {
             case .success(let message):

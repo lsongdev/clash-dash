@@ -2,6 +2,8 @@ import SwiftUI
 
 struct LogView: View {
     let server: ClashServer
+    @ObservedObject private var appManager = AppManager.shared
+    private var activeServer: ClashServer { server.isDemo ? appManager.demoServer : server }
     @StateObject private var viewModel = LogViewModel()
     @State private var selectedLevel: LogLevel = .info
     
@@ -36,7 +38,11 @@ struct LogView: View {
         .navigationTitle("Logs")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            viewModel.connect(to: server)
+            viewModel.connect(to: activeServer)
+        }
+        .onChange(of: activeServer.connectionIdentifier) { _, _ in
+            viewModel.disconnect(clearLogs: false)
+            viewModel.connect(to: activeServer)
         }
         .onDisappear {
             viewModel.disconnect()

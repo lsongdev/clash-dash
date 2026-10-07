@@ -10,13 +10,13 @@ struct ServerListView: View {
     
     var body: some View {
         NavigationStack {
-            if appManager.servers.isEmpty {
+            if appManager.availableServers.isEmpty {
                 emptyView()
                     .navigationTitle("Servers")
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar { ToolbarItem(placement: .topBarTrailing) { addButton } }
             } else {
-                List(appManager.servers) { server in
+                List(appManager.availableServers) { server in
                     Button {
                         onSelect?(server)
                         appManager.selectServer(server)
@@ -30,13 +30,16 @@ struct ServerListView: View {
                     }
                     .buttonStyle(.plain)
                     .contextMenu {
-                        editButton(for: server)
                         deleteButton(for: server)
+                        if !server.isDemo {
+                            editButton(for: server)
+                        }
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         deleteButton(for: server)
-                        editButton(for: server)
-                            .tint(.blue)
+                        if !server.isDemo {
+                            editButton(for: server).tint(.blue)
+                        }
                     }
                 }
                 .navigationTitle("Servers")
@@ -65,9 +68,9 @@ struct ServerListView: View {
                 }
             }
             .navigationDestination(item: $editingServer) { server in
-                ServerFormView(server: server) { updatedServer in
+                ServerFormView(server: server, onSave: { updatedServer in
                     appManager.updateServer(updatedServer)
-                }
+                }, allowsDemo: false)
             }
             .alert("Connection Error", isPresented: $appManager.showError) {
                 Button("OK", role: .cancel) {}
@@ -82,9 +85,9 @@ struct ServerListView: View {
     }
     
     var addButton: some View {
-        Button(action: {
+        Button {
             showingAddSheet = true
-        }) {
+        } label: {
             Image(systemName: "plus")
         }
     }
@@ -118,7 +121,7 @@ struct ServerListView: View {
                 .font(.title2)
                 .fontWeight(.medium)
             
-            Text("Tap [+] to add server")
+            Text("Add a server to get started, or try the local demo.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -148,7 +151,7 @@ struct ServerRowView: View {
     
     private var versionDisplay: String {
         guard let version = server.version, !version.isEmpty else { return server.status.text }
-        return "\(server.status.text) · \(version)"
+        return server.isDemo ? "Local only · Safe to explore" : "\(server.status.text) · \(version)"
     }
     
     var body: some View {

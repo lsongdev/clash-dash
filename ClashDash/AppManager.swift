@@ -15,7 +15,7 @@ final class AppManager: ObservableObject {
     static let shared = AppManager()
       
     @AppStorage("colorScheme") var colorSchemeMode: ColorSchemeMode = .system
-    @AppStorage("appTintColor") var appTintColor: AppTintColor = .orange
+    @AppStorage("appTintColor") var appTintColor: AppTintColor = .blue
     @AppStorage("appFontDesign") var appFontDesign: AppFontDesign = .standard
     @AppStorage("appFontSize") var appFontSize: AppFontSize = .xlarge
     @AppStorage("appFontWidth") var appFontWidth: AppFontWidth = .expanded
@@ -30,6 +30,8 @@ final class AppManager: ObservableObject {
     @Published private(set) var currentServer = ClashServer()
     
     @Published var servers: [ClashServer] = []
+    @Published private(set) var demoServer = ClashServer.demo
+    var availableServers: [ClashServer] { servers }
     @Published var showError = false
     @Published var errorMessage: String?
     @Published var errorDetails: String?
@@ -46,11 +48,55 @@ final class AppManager: ObservableObject {
         loadServers()
         loadCurrentServer()
         syncWidgetServer()
+        startDemoServer()
         Task {
             await checkAllServersStatus()
         }
     }
     
+    private var demoStartupID = UUID()
+    private var demoIsSuspended = false
+
+    func suspendDemoServer() {
+        guard !demoIsSuspended else { return }
+        demoIsSuspended = true
+        demoStartupID = UUID()
+        demoServer.status = .unknown
+        LocalDemoServer.shared.stop()
+    }
+
+    func resumeDemoServer() {
+        guard demoIsSuspended else { return }
+        demoIsSuspended = false
+        startDemoServer()
+    }
+
+    private func startDemoServer() {
+        let startupID = UUID()
+        demoStartupID = startupID
+        LocalDemoServer.shared.start { [weak self] result in
+            Task { @MainActor in
+                guard let self, self.demoStartupID == startupID else { return }
+                switch result {
+                case .success(let port):
+                    self.demoServer.port = String(port)
+                    self.demoServer.connectionGeneration = UUID()
+                    self.demoServer.status = .ok
+                    self.demoServer.errorMessage = nil
+                case .failure(let error):
+                    self.demoServer.status = .error
+                    self.demoServer.errorMessage = error.localizedDescription
+                }
+                if let index = self.servers.firstIndex(where: \.isDemo) {
+                    self.servers[index] = self.demoServer
+                    self.saveServers()
+                    if self.currentServer.isDemo { self.setCurrentServer(self.demoServer) }
+                    await self.checkServerStatus(self.demoServer)
+                }
+            }
+        }
+    }
+
     // MARK: - Server Loading & Saving
     private func loadServers() {
         if let data = UserDefaults.standard.data(forKey: Self.saveKey),
@@ -66,6 +112,15 @@ final class AppManager: ObservableObject {
     }
     
     // MARK: - Server Management
+    func addDemoServer() {
+        guard demoServer.status == .ok else { return }
+        if !servers.contains(where: \.isDemo) {
+            servers.append(demoServer)
+            saveServers()
+        }
+        selectServer(demoServer)
+    }
+
     func addServer(_ server: ClashServer) {
         var newServer = server
         newServer.status = .unknown
@@ -129,6 +184,7 @@ final class AppManager: ObservableObject {
     }
 
     func checkServerStatus(_ server: ClashServer) async {
+        guard server.isValid else { return }
         guard servers.contains(where: { $0.id == server.id }) else { return }
         let checkToken = UUID()
         statusCheckTokens[server.id] = checkToken
@@ -175,7 +231,7 @@ final class AppManager: ObservableObject {
         let defaults = UserDefaults.standard
         if let idString = defaults.string(forKey: Self.currentServerIDKey),
            let id = UUID(uuidString: idString),
-           let selectedServer = servers.first(where: { $0.id == id }) {
+           let selectedServer = availableServers.first(where: { $0.id == id }) {
             currentServer = selectedServer
             return
         }
@@ -194,7 +250,7 @@ final class AppManager: ObservableObject {
     }
     
     func selectServer(_ server: ClashServer) {
-        guard let selectedServer = servers.first(where: { $0.id == server.id }) else { return }
+        guard let selectedServer = availableServers.first(where: { $0.id == server.id }) else { return }
         guard currentServer.id != selectedServer.id else { return }
         setCurrentServer(selectedServer)
         Task { await checkServerStatus(selectedServer) }
@@ -211,6 +267,7 @@ final class AppManager: ObservableObject {
                 && $0.port == snapshot.port
                 && $0.secret == snapshot.secret
                 && $0.useSSL == snapshot.useSSL
+                && $0.connectionGeneration == snapshot.connectionGeneration
         }
     }
 
@@ -242,7 +299,7 @@ final class AppManager: ObservableObject {
     }
 
     private func syncWidgetServer() {
-        if currentServer.isValid {
+        if currentServer.isValid && !currentServer.isDemo {
             WidgetStore.saveServer(
                 WidgetServerConfiguration(
                     id: currentServer.id,

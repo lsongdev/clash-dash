@@ -82,6 +82,9 @@ class NetworkMonitor: ObservableObject {
         connectionsTask?.cancel(with: .goingAway, reason: nil)
         memoryTask?.cancel(with: .goingAway, reason: nil)
         
+        trafficTask = nil
+        connectionsTask = nil
+        memoryTask = nil
         isConnected.removeAll()
         server = nil
         widgetDownload = nil
@@ -165,8 +168,9 @@ class NetworkMonitor: ObservableObject {
     }
     
     private func receiveTrafficData() {
-        trafficTask?.receive { [weak self] result in
-            guard let self = self else { return }
+        guard let task = trafficTask else { return }
+        task.receive { [weak self] result in
+            guard let self, self.trafficTask === task, self.isMonitoring else { return }
             
             switch result {
             case .success(let message):
@@ -194,8 +198,9 @@ class NetworkMonitor: ObservableObject {
     }
     
     private func receiveMemoryData() {
-        memoryTask?.receive { [weak self] result in
-            guard let self = self else { return }
+        guard let task = memoryTask else { return }
+        task.receive { [weak self] result in
+            guard let self, self.memoryTask === task, self.isMonitoring else { return }
             
             switch result {
             case .success(let message):
@@ -223,8 +228,9 @@ class NetworkMonitor: ObservableObject {
     }
     
     private func receiveConnectionsData() {
-        connectionsTask?.receive { [weak self] result in
-            guard let self = self else { return }
+        guard let task = connectionsTask else { return }
+        task.receive { [weak self] result in
+            guard let self, self.connectionsTask === task, self.isMonitoring else { return }
             
             switch result {
             case .success(let message):
@@ -407,7 +413,8 @@ class NetworkMonitor: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
             guard let self = self,
                   self.isMonitoring,
-                  self.isViewActive else { return }
+                  self.isViewActive,
+                  self.server?.connectionIdentifier == server.connectionIdentifier else { return }
             
             print("开始重新连接 \(type.rawValue) WebSocket...")
             switch type {

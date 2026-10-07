@@ -20,7 +20,7 @@ struct ClashDashApp: App {
     
     var body: some Scene {
         WindowGroup {
-            MainView()
+            AppRootView()
         }
     }
 }
