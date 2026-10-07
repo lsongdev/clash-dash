@@ -9,8 +9,18 @@ ClashDash is an iOS dashboard for a Clash-compatible controller. Connect to a co
 - Proxy groups and providers, including provider-only nodes, with latency testing and selection.
 - Rule and rule-provider lists.
 - Connection details, logs, DNS lookup, and controller settings.
+- A guided welcome screen with an offline demo server for exploring the dashboard before adding a controller.
 - Multiple saved servers with connection status and a consistent selection indicator.
 - Small and medium Home Screen widgets for download speed, upload speed, and active connections. Widgets refresh from the selected controller on the system's schedule and show the last update when it is unreachable.
+
+## Screenshots
+
+The welcome screen lets you explore a local demo without configuring a server. You can add your own Clash-compatible controller at any time.
+
+| iPhone | iPad |
+| --- | --- |
+| ![ClashHandy welcome screen on iPhone](docs/screenshots/ios-welcome-iphone.png) | ![ClashHandy welcome screen on iPad](docs/screenshots/ios-welcome-ipad.png) |
+| ![ClashHandy demo dashboard on iPhone](docs/screenshots/ios-dashboard-iphone.png) | ![ClashHandy demo dashboard on iPad](docs/screenshots/ios-dashboard-ipad.png) |
 
 ## Requirements
 
